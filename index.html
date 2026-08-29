@@ -161,6 +161,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--primary-dark);color:#fff;padding:10px 18px;border-radius:30px;font-size:12.5px;z-index:60;}
 
 .tabbar{display:none;}
+.mobile-admin-row{display:none;}
 .loading-shell{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;}
 .loader-ring{width:40px;height:40px;border-radius:50%;border:3px solid var(--ring-track);border-top-color:var(--primary);margin:0 auto;animation:spin 0.9s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -168,7 +169,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 @media (max-width: 860px){
   .sidebar{display:none;}
   #app{flex-direction:column;}
-  .content{padding:10px 14px 90px;}
+  .content{padding:10px 14px 148px;}
   .topbar{padding:16px 14px 4px;}
   .stat-row{grid-template-columns:repeat(2,1fr);}
   .two-col{grid-template-columns:1fr;}
@@ -178,6 +179,17 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
   .tab-btn.active{color:var(--primary);}
   .tab-icon{font-size:18px;}
   .tab-label{font-size:10px;font-weight:600;}
+  .mobile-admin-row{
+    display:flex;justify-content:center;position:fixed;left:0;right:0;
+    bottom:calc(54px + env(safe-area-inset-bottom));
+    background:var(--bg);border-top:1px solid var(--line);padding:8px 14px;z-index:39;
+  }
+  .mobile-admin-row .admin-toggle{
+    width:auto;background:var(--surface);border:1px solid var(--line);color:var(--ink);
+  }
+  .mobile-admin-row .admin-toggle .dot{background:var(--muted);}
+  .mobile-admin-row .admin-toggle.on{background:rgba(111,154,114,0.15);border-color:var(--sage);color:var(--primary-dark);}
+  .mobile-admin-row .admin-toggle.on .dot{background:var(--sage);}
 }
 </style>
 </head>
@@ -705,15 +717,22 @@ function render(){
           <span class="tab-label">${tabLabel(t)}</span>
         </button>`).join("")}
     </nav>
+    <div class="mobile-admin-row">
+      <button class="admin-toggle ${state.isAdmin?"on":""}" id="admin-toggle-mobile">
+        <span class="dot"></span>${state.isAdmin?"Administrador activo":"Ingresar como admin"}
+      </button>
+    </div>
   `;
   app.querySelectorAll("[data-tab]").forEach(btn=>{
     btn.addEventListener("click", ()=>{ state.tab = btn.dataset.tab; render(); });
   });
-  const adminBtn = document.getElementById("admin-toggle");
-  adminBtn.addEventListener("click", ()=>{
+  const adminHandler = ()=>{
     if (state.isAdmin){ state.isAdmin=false; showToast("Modo administrador desactivado"); render(); }
     else { requireAdmin(()=>{}); }
-  });
+  };
+  document.getElementById("admin-toggle").addEventListener("click", adminHandler);
+  const adminBtnMobile = document.getElementById("admin-toggle-mobile");
+  if (adminBtnMobile) adminBtnMobile.addEventListener("click", adminHandler);
   renderTabContent();
 }
 

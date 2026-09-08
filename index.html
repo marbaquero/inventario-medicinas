@@ -285,7 +285,13 @@ const SEED_PURCHASES = [{
   ], total:79.34, saved:27.6
 }];
 
-const todayISO = () => new Date().toISOString().slice(0,10);
+const todayISO = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+};
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 /* ============================================================ */
@@ -373,7 +379,10 @@ function nextRefillDate(med){
   if (d===null) return null;
   const dt = new Date();
   dt.setDate(dt.getDate() + d);
-  return dt.toISOString().slice(0,10);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,"0");
+  const day = String(dt.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
 }
 function fmtDateEs(iso){
   if (!iso) return "—";
@@ -799,7 +808,7 @@ function dashboardHTML(){
     .sort((a,b)=> a.refill < b.refill ? -1 : 1)
     .slice(0,3);
   const in30days = new Date(); in30days.setDate(in30days.getDate()+30);
-  const in30ISO = in30days.toISOString().slice(0,10);
+  const in30ISO = `${in30days.getFullYear()}-${String(in30days.getMonth()+1).padStart(2,"0")}-${String(in30days.getDate()).padStart(2,"0")}`;
   const dueSoon = state.meds.filter(m=>{ const r = nextRefillDate(m); return r && r <= in30ISO; });
   const dueSoonCost = dueSoon.reduce((s,m)=>{
     if (!m.pricePerPill) return s;

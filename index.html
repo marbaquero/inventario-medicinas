@@ -862,25 +862,20 @@ function dashboardHTML(){
             </div>`).join("")}
         </div>
       </section>` : ""}
-      <section class="panel">
-        <div class="panel-head"><h3>Compras recientes</h3></div>
-        ${recentPurchases.length ? `
-          <div class="stack">
-            ${recentPurchases.map(p=>`
-              <div class="recent-purchase-row">
-                <div class="row-between">
-                  <div><span class="strong">${esc(p.pharmacy)}</span> <span class="muted small">· ${p.date}</span></div>
-                  <div class="mono strong">$${Number(p.total).toFixed(2)}</div>
-                </div>
-                <div class="muted small" style="margin-top:2px">${p.items.map(it=>`${esc(it.name)} ×${it.qty}`).join(", ")}</div>
-              </div>`).join("")}
-          </div>
-        ` : `<div class="muted small">Sin compras registradas.</div>`}
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>
-        ${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}
-      </section>
+      <div class="two-col">
+        <section class="panel">
+          <div class="panel-head"><h3>Última compra</h3></div>
+          ${recentPurchases.length ? `
+            <div class="row-between"><div class="muted small">${recentPurchases[0].date}</div><div class="mono strong">$${Number(recentPurchases[0].total).toFixed(2)}</div></div>
+            <div class="muted small" style="margin-top:4px">${esc(recentPurchases[0].pharmacy)}</div>
+            <ul class="mini-list" style="margin-top:10px">${recentPurchases[0].items.slice(0,5).map(it=>`<li><span>${esc(it.name)}</span><span class="mono">×${it.qty}</span></li>`).join("")}</ul>
+          ` : `<div class="muted small">Sin compras registradas.</div>`}
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>
+          ${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}
+        </section>
+      </div>
     </div>`;
 }
 

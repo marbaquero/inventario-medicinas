@@ -600,12 +600,22 @@ function openPurchaseModal(existing){
       const med = state.meds.find(m=>m.id===r.medId);
       return { medId:r.medId, name: med?`${med.name} ${med.dose}`:"", qty:Number(r.qty), subtotal:Number(r.subtotal) };
     });
-    if (!named.length || !backdrop.querySelector("#p-pharmacy").value.trim()) return;
+    const pharmacyVal = backdrop.querySelector("#p-pharmacy").value.trim();
+    let errEl = backdrop.querySelector("#p-error");
+    if (!errEl){
+      errEl = document.createElement("div");
+      errEl.id = "p-error";
+      errEl.className = "error-text";
+      backdrop.querySelector("#p-save").parentElement.insertAdjacentElement("beforebegin", errEl);
+    }
+    if (!named.length){ errEl.textContent = "Seleccione al menos un medicamento."; return; }
+    if (!pharmacyVal){ errEl.textContent = "Escriba el nombre de la farmacia o sucursal."; return; }
+    errEl.textContent = "";
     const total = named.reduce((s,it)=>s+it.subtotal,0);
     const purchase = {
       id: isEdit ? existing.id : "p"+Date.now(),
       date: backdrop.querySelector("#p-date").value,
-      pharmacy: backdrop.querySelector("#p-pharmacy").value.trim(),
+      pharmacy: pharmacyVal,
       receiptRef: backdrop.querySelector("#p-ref").value.trim(),
       items: named, total
     };
@@ -1045,7 +1055,17 @@ function openFillModal(existing){
       const med = state.meds.find(m=>m.id===medId);
       if (qty > 0) items.push({ medId, medName: med?`${med.name} ${med.dose}`:"", qty });
     });
-    if (!items.length) return;
+    if (!items.length){
+      let errEl = backdrop.querySelector("#fill-error");
+      if (!errEl){
+        errEl = document.createElement("div");
+        errEl.id = "fill-error";
+        errEl.className = "error-text";
+        backdrop.querySelector(".modal-actions").insertAdjacentElement("beforebegin", errEl);
+      }
+      errEl.textContent = "Ponga al menos una cantidad mayor a 0.";
+      return;
+    }
     if (isEdit){
       await updateFill(existing.id, date, by, items, deduct);
     } else {

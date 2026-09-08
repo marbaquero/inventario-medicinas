@@ -99,6 +99,8 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .alert-name{font-weight:600;font-size:13.5px;}
 .mini-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
 .mini-list li{display:flex;justify-content:space-between;gap:10px;font-size:13px;}
+.recent-purchase-row{padding:8px 0;border-bottom:1px solid var(--line);}
+.recent-purchase-row:last-child{border-bottom:none;}
 .row-between{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .text-right{text-align:right;}
 .mono{font-family:var(--mono);}
@@ -429,6 +431,21 @@ async function persistPurchases(next){ state.purchases = next; await kvSet("purc
 async function persistDispensing(next){ state.dispensing = next; await kvSet("dispensing", next); flashSync(); }
 async function persistFills(next){ state.fills = next; await kvSet("fills", next); flashSync(); }
 
+// Fresh-fetch-then-mutate: reads the latest saved copy right before writing, so a
+// change made from another tab/device isn't silently overwritten by stale local data.
+async function mutateArray(key, stateKey, mutatorFn){
+  const fresh = await kvGet(key, state[stateKey]);
+  const next = mutatorFn(fresh);
+  state[stateKey] = next;
+  await kvSet(key, next);
+  flashSync();
+  return next;
+}
+async function mutateMeds(fn){ return mutateArray("medications","meds",fn); }
+async function mutatePurchases(fn){ return mutateArray("purchases","purchases",fn); }
+async function mutateDispensing(fn){ return mutateArray("dispensing","dispensing",fn); }
+async function mutateFills(fn){ return mutateArray("fills","fills",fn); }
+
 /* ---- admin gate ---- */
 function requireAdmin(action){
   if (state.isAdmin){ action(); return; }
@@ -522,9 +539,10 @@ function openMedEditModal(med){
       unit: form.unit || "tab",
     };
     if (!updated.name || !updated.dose) return;
-    const exists = state.meds.some(m=>m.id===updated.id);
-    const next = exists ? state.meds.map(m=>m.id===updated.id?updated:m) : [...state.meds, updated];
-    await persistMeds(next);
+    await mutateMeds(fresh=>{
+      const exists = fresh.some(m=>m.id===updated.id);
+      return exists ? fresh.map(m=>m.id===updated.id?updated:m) : [...fresh, updated];
+    });
     backdrop.remove();
     showToast(`${updated.name} actualizado`);
     render();
@@ -622,15 +640,14 @@ function openPurchaseModal(existing){
     const nextPurchases = isEdit
       ? state.purchases.map(p=>p.id===purchase.id?purchase:p)
       : [...state.purchases, purchase];
-    await persistPurchases(nextPurchases);
+    await mutatePurchases(fresh=> isEdit ? fresh.map(p=>p.id===purchase.id?purchase:p) : [...fresh, purchase]);
     await applyPurchasePrices(purchase);
     const addStock = backdrop.querySelector("#p-addstock").checked;
     if (addStock){
-      const nextMeds = state.meds.map(m=>{
+      await mutateMeds(fresh=> fresh.map(m=>{
         const match = named.find(it=>it.medId===m.id);
         return match ? { ...m, stock: m.stock + match.qty } : m;
-      });
-      await persistMeds(nextMeds);
+      }));
     }
     backdrop.remove();
     showToast(isEdit ? "Compra actualizada" : (addStock ? "Compra registrada — stock y precios actualizados" : "Compra registrada — precios actualizados"));
@@ -640,63 +657,57 @@ function openPurchaseModal(existing){
 
 /* ---- actions ---- */
 async function updateMedStock(id, delta){
-  const next = state.meds.map(m=> m.id===id ? {...m, stock: Math.max(0, m.stock+delta)} : m);
-  await persistMeds(next);
+  await mutateMeds(fresh=> fresh.map(m=> m.id===id ? {...m, stock: Math.max(0, m.stock+delta)} : m));
   render();
 }
 async function dispensePill(medId, qty, by){
   const med = state.meds.find(m=>m.id===medId);
   if (!med) return;
   const entry = { id:"d"+Date.now(), date: todayISO(), medId, medName:`${med.name} ${med.dose}`, qty, by: by||"" };
-  await persistDispensing([...state.dispensing, entry]);
-  const nextMeds = state.meds.map(m=> m.id===medId ? {...m, stock: Math.max(0, m.stock-qty)} : m);
-  await persistMeds(nextMeds);
+  await mutateDispensing(fresh=> [...fresh, entry]);
+  await mutateMeds(fresh=> fresh.map(m=> m.id===medId ? {...m, stock: Math.max(0, m.stock-qty)} : m));
   showToast("Dosis registrada y descontada del stock");
 }
 
 async function registerFill(date, by, items, deductStock){
   const entry = { id:"f"+Date.now(), date, by, items };
-  await persistFills([...state.fills, entry]);
+  await mutateFills(fresh=> [...fresh, entry]);
   if (deductStock){
-    const nextMeds = state.meds.map(m=>{
+    await mutateMeds(fresh=> fresh.map(m=>{
       const match = items.find(it=>it.medId===m.id);
       return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
-    });
-    await persistMeds(nextMeds);
+    }));
   }
 }
 
 async function updateFill(id, date, by, items, deductStock){
-  const nextFills = state.fills.map(f=> f.id===id ? { ...f, date, by, items } : f);
-  await persistFills(nextFills);
+  await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items } : f));
   if (deductStock){
-    const nextMeds = state.meds.map(m=>{
+    await mutateMeds(fresh=> fresh.map(m=>{
       const match = items.find(it=>it.medId===m.id);
       return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
-    });
-    await persistMeds(nextMeds);
+    }));
   }
 }
 
 async function deleteFill(id){
-  await persistFills(state.fills.filter(f=>f.id!==id));
+  await mutateFills(fresh=> fresh.filter(f=>f.id!==id));
   showToast("Llenado eliminado del historial");
   render();
 }
 
 async function applyPurchasePrices(purchase){
   // Purchases are historical/price records only — they do not change stock.
-  const next = state.meds.map(m=>{
+  await mutateMeds(fresh=> fresh.map(m=>{
     const match = purchase.items.find(it=>it.medId===m.id);
     if (!match || !match.qty) return m;
     const pricePerPill = Number(match.subtotal) / Number(match.qty);
     return isFinite(pricePerPill) ? { ...m, pricePerPill } : m;
-  });
-  await persistMeds(next);
+  }));
 }
 
 async function deletePurchase(id){
-  await persistPurchases(state.purchases.filter(p=>p.id!==id));
+  await mutatePurchases(fresh=> fresh.filter(p=>p.id!==id));
   showToast("Compra eliminada del historial");
   render();
 }
@@ -777,7 +788,7 @@ function dashboardHTML(){
   const lowStock = state.meds.filter(m=>statusOf(m)!=="ok");
   const outOfStock = state.meds.filter(m=>statusOf(m)==="out");
   const totalUnits = state.meds.reduce((s,m)=>s+m.stock,0);
-  const lastPurchase = state.purchases[state.purchases.length-1];
+  const recentPurchases = [...state.purchases].sort((a,b)=> a.date<b.date?1:-1).slice(0,5);
   const recentFills = [...state.fills].sort((a,b)=> a.date<b.date?1:-1).slice(0,4);
   const totalMonthlyCost = state.meds.reduce((s,m)=>s+monthlyCost(m),0);
   const totalValue = state.meds.reduce((s,m)=>s+stockValue(m),0);
@@ -851,20 +862,25 @@ function dashboardHTML(){
             </div>`).join("")}
         </div>
       </section>` : ""}
-      <div class="two-col">
-        <section class="panel">
-          <div class="panel-head"><h3>Última compra</h3></div>
-          ${lastPurchase ? `
-            <div class="row-between"><div class="muted small">${lastPurchase.date}</div><div class="mono strong">$${Number(lastPurchase.total).toFixed(2)}</div></div>
-            <div class="muted small" style="margin-top:4px">${esc(lastPurchase.pharmacy)}</div>
-            <ul class="mini-list" style="margin-top:10px">${lastPurchase.items.slice(0,4).map(it=>`<li><span>${esc(it.name)}</span><span class="mono">×${it.qty}</span></li>`).join("")}</ul>
-          ` : `<div class="muted small">Sin compras registradas.</div>`}
-        </section>
-        <section class="panel">
-          <div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>
-          ${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}
-        </section>
-      </div>
+      <section class="panel">
+        <div class="panel-head"><h3>Compras recientes</h3></div>
+        ${recentPurchases.length ? `
+          <div class="stack">
+            ${recentPurchases.map(p=>`
+              <div class="recent-purchase-row">
+                <div class="row-between">
+                  <div><span class="strong">${esc(p.pharmacy)}</span> <span class="muted small">· ${p.date}</span></div>
+                  <div class="mono strong">$${Number(p.total).toFixed(2)}</div>
+                </div>
+                <div class="muted small" style="margin-top:2px">${p.items.map(it=>`${esc(it.name)} ×${it.qty}`).join(", ")}</div>
+              </div>`).join("")}
+          </div>
+        ` : `<div class="muted small">Sin compras registradas.</div>`}
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>
+        ${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}
+      </section>
     </div>`;
 }
 

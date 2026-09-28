@@ -19,6 +19,7 @@
 <!-- ============================================================ -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 :root{
@@ -80,6 +81,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .mini-stat.mini-warn .mini-stat-num{color:var(--amber);}
 .mini-stat.mini-danger .mini-stat-num{color:var(--brick);}
 .notice-bar{background:rgba(192,138,52,0.10);border:1px solid rgba(192,138,52,0.3);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.5;}
+.alert-banner{background:#FEF3C7;border:1px solid #F59E0B;border-radius:12px;padding:12px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+.alert-banner strong{color:#92400E;}
+.suggestion-text{color:#92400E;font-weight:600;font-size:12px;margin-top:2px;}
 @media (max-width: 860px){
   .stat-grid-6{grid-template-columns:repeat(3,1fr);}
 }
@@ -316,8 +320,6 @@ async function loadAll(){
   if (!d) await kvSet("dispensing", state.dispensing);
   if (!f) await kvSet("fills", state.fills);
 
-  // Migration: older purchase records saved item names only, with no medId link.
-  // Match them to a medication by name/brand + dose so price history can connect.
   const norm = (s) => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
   function findMedForItem(itemName){
     const in_ = norm(itemName);
@@ -343,7 +345,6 @@ async function loadAll(){
   });
   if (purchasesChanged) { state.purchases = migratedPurchases; await kvSet("purchases", state.purchases); }
 
-  // Backfill: fill in missing pricePerPill from purchase history (fixes older saved data)
   let changed = false;
   const backfilled = state.meds.map(med=>{
     if (med.pricePerPill) return med;
@@ -440,8 +441,6 @@ async function persistPurchases(next){ state.purchases = next; await kvSet("purc
 async function persistDispensing(next){ state.dispensing = next; await kvSet("dispensing", next); flashSync(); }
 async function persistFills(next){ state.fills = next; await kvSet("fills", next); flashSync(); }
 
-// Fresh-fetch-then-mutate: reads the latest saved copy right before writing, so a
-// change made from another tab/device isn't silently overwritten by stale local data.
 async function mutateArray(key, stateKey, mutatorFn){
   const fresh = await kvGet(key, state[stateKey]);
   const next = mutatorFn(fresh);
@@ -454,6 +453,128 @@ async function mutateMeds(fn){ return mutateArray("medications","meds",fn); }
 async function mutatePurchases(fn){ return mutateArray("purchases","purchases",fn); }
 async function mutateDispensing(fn){ return mutateArray("dispensing","dispensing",fn); }
 async function mutateFills(fn){ return mutateArray("fills","fills",fn); }
+
+/* ============================================================ */
+/* NUEVAS FUNCIONES — 1,2,3                                     */
+/* ============================================================ */
+const DIAS_OBJETIVO = 60; // para compra segura
+
+function calcularSugeridoMinimo(med){
+  return Math.max(0, med.minThreshold - med.stock);
+}
+function calcularSugeridoSeguro(med){
+  const objetivoDias = (med.dailyDose||1) * DIAS_OBJETIVO;
+  const objetivoMinDoble = med.minThreshold * 2;
+  const objetivo = Math.max(objetivoDias, objetivoMinDoble);
+  return Math.max(0, Math.ceil(objetivo - med.stock));
+}
+
+function generarMensajeAlerta(medsBajo){
+  if (!medsBajo || !medsBajo.length) return null;
+  let lineas = [];
+  lineas.push("*Cuidado Rosa Emilia - Alerta de inventario*");
+  lineas.push(`${new Date().toLocaleDateString('es-MX')} - ${medsBajo.length} medicamento(s) en bajo stock:`);
+  lineas.push("");
+  medsBajo.forEach(m=>{
+    const sugMin = calcularSugeridoMinimo(m);
+    const sugSeg = calcularSugeridoSeguro(m);
+    lineas.push(`• ${m.name} ${m.dose}: ${m.stock} restantes (mín ${m.minThreshold}) - agot. ${fmtDateEs(nextRefillDate(m))} - comprar ${sugMin} para mínimo, ${sugSeg} para ${DIAS_OBJETIVO} días`);
+  });
+  lineas.push("");
+  lineas.push(`Ver: https://marbaquero.github.io/inventario-medicinas/`);
+  return lineas.join("\n");
+}
+
+function enviarAlertaWhatsApp(){
+  const bajos = state.meds.filter(m=>statusOf(m)!=="ok");
+  const msg = generarMensajeAlerta(bajos);
+  if (!msg) { showToast("No hay medicamentos en bajo stock"); return; }
+  const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+function enviarAlertaEmail(){
+  const bajos = state.meds.filter(m=>statusOf(m)!=="ok");
+  const msg = generarMensajeAlerta(bajos);
+  if (!msg) { showToast("No hay medicamentos en bajo stock"); return; }
+  const subject = `Alerta inventario Rosa Emilia - ${bajos.length} en bajo stock`;
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+}
+
+function exportarReportePDF(){
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast("jsPDF no cargado, recargue la página");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ format: 'a4' });
+  const fecha = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+  let y = 15;
+  doc.setFontSize(16);
+  doc.text('Inventario - Cuidado Rosa Emilia', 15, y); y+=8;
+  doc.setFontSize(10);
+  doc.text(`Reporte generado: ${fecha}`, 15, y); y+=12;
+
+  const totalUnits = state.meds.reduce((s,m)=>s+m.stock,0);
+  const lowStock = state.meds.filter(m=>statusOf(m)!=="ok");
+  const outOfStock = state.meds.filter(m=>statusOf(m)==="out");
+  const totalMonthlyCost = state.meds.reduce((s,m)=>s+monthlyCost(m),0);
+  const totalValue = state.meds.reduce((s,m)=>s+stockValue(m),0);
+
+  doc.setFontSize(12);
+  doc.text('Resumen', 15, y); y+=6;
+  doc.setFontSize(9);
+  doc.text(`Medicamentos: ${state.meds.length} | Unidades: ${totalUnits} | Bajo: ${lowStock.length} | Agotados: ${outOfStock.length}`, 15, y); y+=5;
+  doc.text(`Costo mensual: $${totalMonthlyCost.toFixed(2)} | Valor stock: $${totalValue.toFixed(2)}`, 15, y); y+=10;
+
+  doc.setFontSize(12);
+  doc.text('Proximos a agotarse', 15, y); y+=6;
+  doc.setFontSize(8);
+  state.meds
+    .map(m=>({ med:m, refill: nextRefillDate(m) }))
+    .filter(x=>x.refill)
+    .sort((a,b)=> a.refill < b.refill ? -1 : 1)
+    .slice(0,8)
+    .forEach(({med,refill})=>{
+      const sugMin = calcularSugeridoMinimo(med);
+      const sugSeg = calcularSugeridoSeguro(med);
+      doc.text(`${med.name} ${med.dose}: ${med.stock} restantes, min ${med.minThreshold}, agot ${fmtDateEs(refill)}, comprar ${sugMin} min / ${sugSeg} seguro`, 15, y);
+      y+=4;
+      if (y>280){ doc.addPage(); y=15; }
+    });
+  y+=4;
+
+  doc.setFontSize(12);
+  doc.text('Atencion requerida - sugerencia compra', 15, y); y+=6;
+  doc.setFontSize(8);
+  if (lowStock.length===0){
+    doc.text('Sin medicamentos por debajo del umbral.', 15, y); y+=4;
+  } else {
+    lowStock.forEach(m=>{
+      const sugMin = calcularSugeridoMinimo(m);
+      const sugSeg = calcularSugeridoSeguro(m);
+      doc.text(`${m.name} ${m.dose}: stock ${m.stock} min ${m.minThreshold} -> comprar ${sugMin} para minimo, ${sugSeg} para ${DIAS_OBJETIVO} dias`, 15, y);
+      y+=4;
+      if (y>280){ doc.addPage(); y=15; }
+    });
+  }
+  y+=6;
+
+  doc.setFontSize(12);
+  doc.text('Ultima compra', 15, y); y+=6;
+  doc.setFontSize(8);
+  const sortedP = [...state.purchases].sort((a,b)=> a.date<b.date?1:-1);
+  if (sortedP.length){
+    const p = sortedP[0];
+    doc.text(`${p.date} - ${p.pharmacy} - $${Number(p.total).toFixed(2)}`, 15, y); y+=4;
+    p.items.slice(0,10).forEach(it=>{
+      doc.text(`${it.name} x${it.qty} $${Number(it.subtotal).toFixed(2)}`, 15, y); y+=4;
+    });
+  }
+
+  doc.save(`Reporte-Rosa-Emilia-${todayISO()}.pdf`);
+  showToast("PDF exportado");
+}
 
 /* ---- admin gate ---- */
 function requireAdmin(action){
@@ -706,7 +827,6 @@ async function deleteFill(id){
 }
 
 async function applyPurchasePrices(purchase){
-  // Purchases are historical/price records only — they do not change stock.
   await mutateMeds(fresh=> fresh.map(m=>{
     const match = purchase.items.find(it=>it.medId===m.id);
     if (!match || !match.qty) return m;
@@ -818,6 +938,21 @@ function dashboardHTML(){
 
   return `
     <div class="stack-lg">
+      <div class="row-between" style="flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-primary" id="btn-export-pdf">📄 Exportar PDF para doctor</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-outline" id="btn-alerta-wa">📲 WhatsApp bajo stock</button>
+          <button class="btn btn-outline" id="btn-alerta-email">✉️ Email bajo stock</button>
+        </div>
+      </div>
+
+      ${lowStock.length ? `
+      <div class="alert-banner">
+        <strong>⚠️ ${lowStock.length} medicamento(s) en bajo stock:</strong>
+        <span class="muted small">${lowStock.map(m=>`${esc(m.name)} ${esc(m.dose)} (${m.stock}/${m.minThreshold})`).join(" · ")}</span>
+        <button class="btn btn-primary sm" id="btn-banner-wa">Enviar alerta ahora</button>
+      </div>` : ""}
+
       <div class="stat-grid-6">
         <div class="mini-stat"><div class="mini-stat-num">${state.meds.length}</div><div class="mini-stat-label">Medicamentos</div></div>
         <div class="mini-stat"><div class="mini-stat-num">${totalUnits}</div><div class="mini-stat-label">Unidades totales</div></div>
@@ -854,6 +989,7 @@ function dashboardHTML(){
               <div class="alert-info">
                 <div class="alert-name">${esc(med.name)} ${esc(med.dose)}</div>
                 <div class="muted small">${med.stock} ${med.unit} restantes · ${med.dailyDose||1}/día · agotamiento estimado ${fmtDateEs(refill)}</div>
+                <div class="suggestion-text">Comprar ${calcularSugeridoMinimo(med)} para mínimo, ${calcularSugeridoSeguro(med)} para ${DIAS_OBJETIVO} días</div>
               </div>
               ${badgeHTML(statusOf(med))}
             </div>`).join("") || `<div class="muted small">Sin datos suficientes para estimar.</div>`}
@@ -861,14 +997,24 @@ function dashboardHTML(){
       </section>
       ${lowStock.length ? `
       <section class="panel">
-        <div class="panel-head"><h3>Atención requerida</h3><span class="muted small">${lowStock.length} medicamento(s) por debajo del umbral</span></div>
+        <div class="panel-head"><h3>Atención requerida — con sugerencia de compra</h3><span class="muted small">${lowStock.length} medicamento(s) por debajo del umbral</span></div>
         <div class="alert-list">
-          ${lowStock.map(m=>`
+          ${lowStock.map(m=>{
+            const sugMin = calcularSugeridoMinimo(m);
+            const sugSeg = calcularSugeridoSeguro(m);
+            const costoMin = m.pricePerPill ? (sugMin * m.pricePerPill).toFixed(2) : null;
+            const costoSeg = m.pricePerPill ? (sugSeg * m.pricePerPill).toFixed(2) : null;
+            return `
             <div class="alert-row">
               ${stockRingSVG(m,40)}
-              <div class="alert-info"><div class="alert-name">${esc(m.name)} ${esc(m.dose)}</div><div class="muted small">${m.stock} ${m.unit} restantes · mínimo ${m.minThreshold}</div></div>
+              <div class="alert-info">
+                <div class="alert-name">${esc(m.name)} ${esc(m.dose)}</div>
+                <div class="muted small">${m.stock} ${m.unit} restantes · mínimo ${m.minThreshold} · agotamiento estimado ${fmtDateEs(nextRefillDate(m))}</div>
+                <div class="suggestion-text">→ Comprar ${sugMin} para llegar al mínimo${costoMin?` ($${costoMin})`:""} · ${sugSeg} para ${DIAS_OBJETIVO} días seguro${costoSeg?` ($${costoSeg})`:""}</div>
+              </div>
               ${badgeHTML(statusOf(m))}
-            </div>`).join("")}
+            </div>`;
+          }).join("")}
         </div>
       </section>` : ""}
       <div class="two-col">
@@ -1024,7 +1170,6 @@ function pastilleroHTML(){
     </div>`;
 }
 
-/* ---- batch fill modal (register all meds at once) ---- */
 function openFillModal(existing){
   const isEdit = !!existing;
   const qtyFor = (m)=>{
@@ -1098,6 +1243,12 @@ function openFillModal(existing){
 }
 
 function wireTabEvents(){
+  if (state.tab==="dashboard"){
+    document.getElementById("btn-export-pdf")?.addEventListener("click", exportarReportePDF);
+    document.getElementById("btn-alerta-wa")?.addEventListener("click", enviarAlertaWhatsApp);
+    document.getElementById("btn-alerta-email")?.addEventListener("click", enviarAlertaEmail);
+    document.getElementById("btn-banner-wa")?.addEventListener("click", enviarAlertaWhatsApp);
+  }
   if (state.tab==="inventario"){
     const search = document.getElementById("inv-search");
     search.addEventListener("input", ()=>{ document.getElementById("tab-content").innerHTML = inventarioHTML(search.value); wireTabEvents(); });

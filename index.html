@@ -388,8 +388,24 @@ function nextRefillDate(med){
 }
 function fmtDateEs(iso){
   if (!iso) return "—";
-  const [y,m,d] = iso.split("-");
-  return `${d}/${m}/${y}`;
+  try{
+    if (iso instanceof Date){
+      const y = iso.getFullYear();
+      const m = String(iso.getMonth()+1).padStart(2,"0");
+      const d = String(iso.getDate()).padStart(2,"0");
+      return `${d}/${m}/${y}`;
+    }
+    let s = String(iso);
+    if (s.includes("T")) s = s.slice(0,10);
+    if (s.includes("-")){
+      const parts = s.split("-");
+      if (parts.length===3){
+        const [y,m,d] = parts;
+        return `${d}/${m}/${y}`;
+      }
+    }
+    return s;
+  }catch(e){ return String(iso||"—"); }
 }
 
 function stockRingSVG(med, size=46){
@@ -737,7 +753,7 @@ function exportarReportePDF(){
 
   // Pastillero
   const fillsSorted = [...state.fills].sort((a,b)=> a.date<b.date?1:-1).slice(0,8);
-  const fillBody = fillsSorted.map(f=>[fmtDateEs(new Date(f.date)), f.by||'-', `${f.items?.length||0} meds`]);
+  const fillBody = fillsSorted.map(f=>[fmtDateEs(f.date), f.by||'-', `${f.items?.length||0} meds`]);
 
   doc.autoTable({
     startY: y,

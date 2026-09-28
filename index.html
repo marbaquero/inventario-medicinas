@@ -510,24 +510,21 @@ function exportarReportePDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   
-  // Colores de tu app
+  // Colores de tu app - Inventario Rosa Emilia
   const C_PRIMARY_DARK = [18,63,61];
   const C_PRIMARY = [37,109,107];
   const C_SAGE = [111,154,114];
   const C_AMBER = [192,138,52];
   const C_BRICK = [168,73,61];
   const C_MUTED = [110,122,117];
-  const C_BG = [245,245,240];
 
-  // ==== HEADER PROFESIONAL ====
+  // ===== HEADER =====
   doc.setFillColor(...C_PRIMARY_DARK);
   doc.rect(0,0,210,30,'F');
   doc.setFillColor(...C_PRIMARY);
   doc.rect(0,30,210,7,'F');
   
-  // Logo Rx
   doc.setFillColor(255,255,255);
-  doc.setDrawColor(255,255,255);
   doc.roundedRect(172,5,20,20,4,4,'F');
   doc.setTextColor(...C_PRIMARY_DARK);
   doc.setFontSize(14);
@@ -537,22 +534,21 @@ function exportarReportePDF(){
   doc.setTextColor(255,255,255);
   doc.setFontSize(16);
   doc.setFont('helvetica','bold');
-  doc.text('Inventario — Cuidado Rosa Emilia', 14, 14);
+  doc.text('Inventario - Cuidado Rosa Emilia', 14, 14);
   
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
   doc.setTextColor(220,235,230);
   const fechaLarga = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  const syncLabel = typeof syncAgoLabel === 'function' ? syncAgoLabel() : '';
-  doc.text(`Reporte generado: ${fechaLarga} · ${syncLabel} · Sincronización automática`, 14, 21);
+  const syncLabel = typeof syncAgoLabel === 'function' ? syncAgoLabel() : 'Sincronización automática activa';
+  doc.text(`Reporte generado: ${fechaLarga} · ${syncLabel}`, 14, 21);
   
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(8);
-  doc.text('Dashboard · Inventario · Compras · Pastillero', 14, 33);
+  doc.setFontSize(7.5);
+  doc.text('Dashboard · Inventario · Compras · Pastillero · Uso personal', 14, 33);
 
-  let y = 43;
+  let y = 44;
 
-  // ==== RESUMEN EN CARDS ====
+  // ===== RESUMEN EN 6 CARDS =====
   const totalUnits = state.meds.reduce((s,m)=>s+m.stock,0);
   const lowStock = state.meds.filter(m=>statusOf(m)!=="ok");
   const outOfStock = state.meds.filter(m=>statusOf(m)==="out");
@@ -562,9 +558,8 @@ function exportarReportePDF(){
   doc.setTextColor(30,43,39);
   doc.setFontSize(11);
   doc.setFont('helvetica','bold');
-  doc.text('Resumen', 14, y); y+=3;
+  doc.text('Resumen', 14, y); y+=4;
 
-  // 6 mini cards
   const cards = [
     { label:'MEDICAMENTOS', value: String(state.meds.length), color: C_PRIMARY_DARK },
     { label:'UNIDADES TOTALES', value: String(totalUnits), color: C_PRIMARY_DARK },
@@ -590,7 +585,7 @@ function exportarReportePDF(){
   });
   y += cardH + 10;
 
-  // ==== COMPRA RECOMENDADA ====
+  // ===== COMPRA RECOMENDADA 30 DIAS =====
   const proximos = state.meds.map(m=>({ med:m, refill: nextRefillDate(m) })).filter(x=>x.refill).sort((a,b)=> a.refill < b.refill ? -1 : 1);
   const compra30dMeds = proximos.filter(x=>{
     const diff = (x.refill - new Date())/ (1000*60*60*24);
@@ -607,20 +602,20 @@ function exportarReportePDF(){
   doc.setFontSize(9);
   doc.setFont('helvetica','bold');
   doc.setTextColor(...C_PRIMARY_DARK);
-  doc.text(`Compra recomendada · próximos 30 días: $${compra30dTotal.toFixed(2)} · ${compra30dMeds.length} medicamento(s) llegarán a su mínimo`, 18, y+7);
+  doc.text(`Compra recomendada · proximos 30 dias: $${compra30dTotal.toFixed(2)} · ${compra30dMeds.length} medicamento(s) llegaran a su minimo`, 18, y+7);
   y+=18;
 
-  // ==== TABLA: PRÓXIMOS A AGOTARSE ====
+  // ===== TABLA: PROXIMOS A AGOTARSE =====
   doc.setFontSize(11);
   doc.setFont('helvetica','bold');
   doc.setTextColor(30,43,39);
-  doc.text('Próximos a agotarse', 14, y); y+=2;
-  doc.setFontSize(8);
+  doc.text('Proximos a agotarse', 14, y); y+=2;
+  doc.setFontSize(7.5);
   doc.setFont('helvetica','normal');
   doc.setTextColor(...C_MUTED);
-  doc.text('según stock actual y dosis diaria', 150, y, {align:'right'}); y+=3;
+  doc.text('segun stock actual y dosis diaria - incluye sugerencia de compra', 14, y); y+=4;
 
-  const proximosBody = proximos.slice(0,12).map(({med,refill})=>{
+  const proximosBody = proximos.slice(0,15).map(({med,refill})=>{
     const sugMin = calcularSugeridoMinimo(med);
     const sugSeg = calcularSugeridoSeguro(med);
     const costoMin = med.pricePerPill ? `$${(sugMin*med.pricePerPill).toFixed(2)}` : '-';
@@ -628,36 +623,36 @@ function exportarReportePDF(){
     const estado = STATUS_LABEL[statusOf(med)];
     return [
       `${med.name} ${med.dose}`,
-      `${med.stock} ${med.unit}`,
+      `${med.stock}`,
       `${med.minThreshold}`,
       fmtDateEs(refill),
-      `${sugMin} (${costoMin})`,
-      `${sugSeg} (${costoSeg})`,
+      `${sugMin} ${costoMin}`,
+      `${sugSeg} ${costoSeg}`,
       estado
     ];
   });
 
   doc.autoTable({
     startY: y,
-    head: [['Medicamento','Stock','Mín','Agotamiento','Comprar mín','Comprar seguro 60d','Estado']],
+    head: [['Medicamento','Stock','Min','Agotamiento','Comprar min','Comprar 60d seguro','Estado']],
     body: proximosBody,
     theme:'grid',
-    headStyles:{ fillColor: C_PRIMARY_DARK, textColor:255, fontSize:7.5, fontStyle:'bold' },
-    bodyStyles:{ fontSize:7.5, textColor:[30,43,39] },
+    headStyles:{ fillColor: C_PRIMARY_DARK, textColor:255, fontSize:7, fontStyle:'bold' },
+    bodyStyles:{ fontSize:7, textColor:[30,43,39] },
     columnStyles:{
-      0:{ cellWidth:42 },
-      1:{ cellWidth:15, halign:'center' },
+      0:{ cellWidth:38 },
+      1:{ cellWidth:12, halign:'center' },
       2:{ cellWidth:10, halign:'center' },
       3:{ cellWidth:20, halign:'center' },
-      4:{ cellWidth:25, halign:'center' },
-      5:{ cellWidth:30, halign:'center' },
-      6:{ cellWidth:20, halign:'center' }
+      4:{ cellWidth:28, halign:'center' },
+      5:{ cellWidth:32, halign:'center' },
+      6:{ cellWidth:18, halign:'center' }
     },
     didParseCell: function(data){
       if (data.section==='body' && data.column.index===6){
         const val = data.cell.raw;
-        if (val==='Bajo stock'){ data.cell.styles.fillColor = [254,243,199]; data.cell.styles.textColor = [146,64,14]; }
-        if (val==='Agotado'){ data.cell.styles.fillColor = [254,226,226]; data.cell.styles.textColor = [153,27,27]; }
+        if (val==='Bajo stock'){ data.cell.styles.fillColor = [254,243,199]; data.cell.styles.textColor = [146,64,14]; data.cell.styles.fontStyle='bold'; }
+        if (val==='Agotado'){ data.cell.styles.fillColor = [254,226,226]; data.cell.styles.textColor = [153,27,27]; data.cell.styles.fontStyle='bold'; }
         if (val==='En regla'){ data.cell.styles.fillColor = [220,252,231]; data.cell.styles.textColor = [22,101,52]; }
       }
     },
@@ -665,15 +660,15 @@ function exportarReportePDF(){
   });
   y = doc.lastAutoTable.finalY + 10;
 
-  // ==== ATENCIÓN REQUERIDA ====
-  if (y > 240){ doc.addPage(); y=20; }
+  // ===== ATENCION REQUERIDA =====
+  if (y > 230){ doc.addPage(); y=20; }
   doc.setFontSize(11);
   doc.setFont('helvetica','bold');
   doc.setTextColor(30,43,39);
-  doc.text('Atención requerida — sugerencia de compra', 14, y); y+=2;
-  doc.setFontSize(8);
+  doc.text('Atencion requerida - sugerencia de compra', 14, y); y+=2;
+  doc.setFontSize(7.5);
   doc.setTextColor(...C_MUTED);
-  doc.text(`${lowStock.length} medicamento(s) por debajo del umbral`, 150, y, {align:'right'}); y+=3;
+  doc.text(`${lowStock.length} medicamento(s) por debajo del umbral`, 14, y); y+=5;
 
   if (lowStock.length===0){
     doc.setFillColor(240,253,244);
@@ -690,52 +685,58 @@ function exportarReportePDF(){
       const costoSeg = m.pricePerPill ? `$${(sugSeg*m.pricePerPill).toFixed(2)}` : '-';
       return [
         `${m.name} ${m.dose}`,
-        `${m.stock}`,
-        `${m.minThreshold}`,
-        `${sugMin} / ${costoMin}`,
-        `${sugSeg} / ${costoSeg} (${DIAS_OBJETIVO}d)`,
+        `${m.stock} / ${m.minThreshold}`,
+        `${sugMin} (${costoMin})`,
+        `${sugSeg} (${costoSeg})`,
         STATUS_LABEL[statusOf(m)]
       ];
     });
     doc.autoTable({
       startY: y,
-      head: [['Medicamento','Stock','Mínimo','Comprar para mínimo','Comprar seguro','Estado']],
+      head: [['Medicamento','Stock / Minimo','Comprar para minimo','Comprar seguro 60 dias','Estado']],
       body: atencionBody,
       theme:'grid',
-      headStyles:{ fillColor: C_AMBER, textColor:[255,255,255], fontSize:7.5, fontStyle:'bold' },
+      headStyles:{ fillColor: C_AMBER, textColor:255, fontSize:7.5, fontStyle:'bold' },
       bodyStyles:{ fontSize:7.5 },
       margin:{ left:14, right:14 },
+      columnStyles:{
+        0:{cellWidth:45},
+        1:{cellWidth:25, halign:'center'},
+        2:{cellWidth:35, halign:'center'},
+        3:{cellWidth:45, halign:'center'},
+        4:{cellWidth:20, halign:'center'}
+      }
     });
     y = doc.lastAutoTable.finalY + 10;
   }
 
-  // ==== ÚLTIMA COMPRA + PASTILLERO en dos columnas ====
-  if (y > 220){ doc.addPage(); y=20; }
+  // ===== ULTIMA COMPRA + PASTILLERO =====
+  if (y > 200){ doc.addPage(); y=20; }
   doc.setFontSize(11);
   doc.setFont('helvetica','bold');
   doc.setTextColor(30,43,39);
-  doc.text('Última compra y Pastillero', 14, y); y+=4;
+  doc.text('Ultima compra y Pastillero', 14, y); y+=6;
 
   const sortedP = [...state.purchases].sort((a,b)=> a.date<b.date?1:-1);
   const ultima = sortedP[0];
-  const compraBody = ultima ? ultima.items.map(it=>[it.name, `x${it.qty}`, `$${Number(it.subtotal).toFixed(2)}`]) : [['Sin compras','-','-']];
-  const compraHead = ultima ? [`${ultima.date} - ${ultima.pharmacy} - $${Number(ultima.total).toFixed(2)}`, 'Cant','Subtotal'] : ['Última compra','-','-'];
 
-  doc.autoTable({
-    startY: y,
-    head: [compraHead],
-    body: compraBody,
-    theme:'grid',
-    headStyles:{ fillColor:[245,245,240], textColor: C_PRIMARY_DARK, fontSize:8, fontStyle:'bold' },
-    bodyStyles:{ fontSize:7.5 },
-    columnStyles:{ 1:{halign:'center', cellWidth:15}, 2:{halign:'right', cellWidth:20} },
-    margin:{ left:14, right:108 },
-    tableWidth:88,
-  });
-  const yAfterCompra = doc.lastAutoTable.finalY;
+  if (ultima){
+    doc.autoTable({
+      startY: y,
+      head: [[`${ultima.date} - ${ultima.pharmacy} - $${Number(ultima.total).toFixed(2)}`, 'Cant','Subtotal']],
+      body: ultima.items.map(it=>[it.name, `x${it.qty}`, `$${Number(it.subtotal).toFixed(2)}`]),
+      theme:'grid',
+      headStyles:{ fillColor:[245,245,240], textColor: C_PRIMARY_DARK, fontSize:8, fontStyle:'bold' },
+      bodyStyles:{ fontSize:7.5 },
+      columnStyles:{ 1:{halign:'center', cellWidth:15}, 2:{halign:'right', cellWidth:20} },
+      margin:{ left:14, right:108 },
+      tableWidth:88,
+    });
+  }
+  const yAfterCompra = doc.lastAutoTable ? doc.lastAutoTable.finalY : y+20;
 
   // Pastillero
-  const fillsSorted = [...state.fills].sort((a,b)=> a.date<b.date?1:-1).slice(0,6);
+  const fillsSorted = [...state.fills].sort((a,b)=> a.date<b.date?1:-1).slice(0,8);
   const fillBody = fillsSorted.map(f=>[fmtDateEs(new Date(f.date)), f.by||'-', `${f.items?.length||0} meds`]);
 
   doc.autoTable({
@@ -749,16 +750,15 @@ function exportarReportePDF(){
     tableWidth:88,
   });
 
-  y = Math.max(yAfterCompra, doc.lastAutoTable.finalY) + 12;
-
-  // ==== FOOTER ====
+  // ===== FOOTER EN TODAS LAS PAGINAS =====
   const pageCount = doc.internal.getNumberOfPages();
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(...C_MUTED);
-    doc.text(`Inventario - Cuidado Rosa Emilia · ${todayISO()} · Página ${i}/${pageCount} · marbaquero.github.io/inventario-medicinas`, 14, 287);
-    doc.text('Uso personal - No reemplaza consejo médico', 196, 287, {align:'right'});
+    doc.text(`Inventario - Cuidado Rosa Emilia · ${todayISO()} · Pagina ${i}/${pageCount} · marbaquero.github.io/inventario-medicinas`, 14, 287);
+    doc.setFontSize(6.5);
+    doc.text('Uso personal - No reemplaza consejo medico', 196, 287, {align:'right'});
   }
 
   doc.save(`Reporte-Rosa-Emilia-${todayISO()}.pdf`);

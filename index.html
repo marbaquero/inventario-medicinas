@@ -320,23 +320,25 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&
 /* App state                                                    */
 /* ============================================================ */
 const state = {
-  meds: [], purchases: [], dispensing: [], fills: [], adminPin: null, isAdmin: false,
+  meds: [], purchases: [], dispensing: [], fills: [], adjustments: [], adminPin: null, isAdmin: false,
   tab: "dashboard", pendingAction: null, invView: "table",
 };
 
 async function loadAll(){
-  const [m,p,d,f,s] = await Promise.all([
-    kvGet("medications", null), kvGet("purchases", null), kvGet("dispensing", null), kvGet("fills", null), kvGet("settings", null)
+  const [m,p,d,f,s,adj] = await Promise.all([
+    kvGet("medications", null), kvGet("purchases", null), kvGet("dispensing", null), kvGet("fills", null), kvGet("settings", null), kvGet("adjustments", null)
   ]);
   state.meds = m || SEED_MEDS;
   state.purchases = p || SEED_PURCHASES;
   state.dispensing = d || [];
   state.fills = f || [];
+  state.adjustments = adj || [];
   state.adminPin = s ? s.adminPin : null;
   if (!m) await kvSet("medications", state.meds);
   if (!p) await kvSet("purchases", state.purchases);
   if (!d) await kvSet("dispensing", state.dispensing);
   if (!f) await kvSet("fills", state.fills);
+  if (!adj) await kvSet("adjustments", state.adjustments);
 
   // Migration: older purchase records saved item names only, with no medId link.
   // Match them to a medication by name/brand + dose so price history can connect.
@@ -476,6 +478,7 @@ async function mutateMeds(fn){ return mutateArray("medications","meds",fn); }
 async function mutatePurchases(fn){ return mutateArray("purchases","purchases",fn); }
 async function mutateDispensing(fn){ return mutateArray("dispensing","dispensing",fn); }
 async function mutateFills(fn){ return mutateArray("fills","fills",fn); }
+async function mutateAdjustments(fn){ return mutateArray("adjustments","adjustments",fn); }
 
 /* ---- admin gate ---- */
 function requireAdmin(action){
@@ -661,19 +664,25 @@ function openPurchaseModal(existing){
     if (!pharmacyVal){ errEl.textContent = "Escriba el nombre de la farmacia o sucursal."; return; }
     errEl.textContent = "";
     const total = named.reduce((s,it)=>s+it.subtotal,0);
+    const addStock = backdrop.querySelector("#p-addstock").checked;
     const purchase = {
       id: isEdit ? existing.id : "p"+Date.now(),
       date: backdrop.querySelector("#p-date").value,
       pharmacy: pharmacyVal,
       receiptRef: backdrop.querySelector("#p-ref").value.trim(),
-      items: named, total
+      items: named, total,
+      stockApplied: addStock
     };
-    const nextPurchases = isEdit
-      ? state.purchases.map(p=>p.id===purchase.id?purchase:p)
-      : [...state.purchases, purchase];
     await mutatePurchases(fresh=> isEdit ? fresh.map(p=>p.id===purchase.id?purchase:p) : [...fresh, purchase]);
     await applyPurchasePrices(purchase);
-    const addStock = backdrop.querySelector("#p-addstock").checked;
+    // Reverse any stock this same purchase already added in a prior save (edit case),
+    // then (re)apply only if the checkbox is checked now — prevents double-counting.
+    if (isEdit && existing.stockApplied){
+      await mutateMeds(fresh=> fresh.map(m=>{
+        const match = (existing.items||[]).find(it=>it.medId===m.id);
+        return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
+      }));
+    }
     if (addStock){
       await mutateMeds(fresh=> fresh.map(m=>{
         const match = named.find(it=>it.medId===m.id);
@@ -701,7 +710,7 @@ async function dispensePill(medId, qty, by){
 }
 
 async function registerFill(date, by, items, deductStock){
-  const entry = { id:"f"+Date.now(), date, by, items };
+  const entry = { id:"f"+Date.now(), date, by, items, stockApplied: deductStock };
   await mutateFills(fresh=> [...fresh, entry]);
   if (deductStock){
     await mutateMeds(fresh=> fresh.map(m=>{
@@ -712,7 +721,16 @@ async function registerFill(date, by, items, deductStock){
 }
 
 async function updateFill(id, date, by, items, deductStock){
-  await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items } : f));
+  const existing = state.fills.find(f=>f.id===id);
+  await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items, stockApplied: deductStock } : f));
+  // Reverse whatever this same fill already deducted in a prior save, then (re)apply
+  // only if the checkbox is checked now — prevents double-counting on edit.
+  if (existing && existing.stockApplied){
+    await mutateMeds(fresh=> fresh.map(m=>{
+      const match = (existing.items||[]).find(it=>it.medId===m.id);
+      return match ? { ...m, stock: m.stock + match.qty } : m;
+    }));
+  }
   if (deductStock){
     await mutateMeds(fresh=> fresh.map(m=>{
       const match = items.find(it=>it.medId===m.id);
@@ -722,8 +740,17 @@ async function updateFill(id, date, by, items, deductStock){
 }
 
 async function deleteFill(id){
+  const target = state.fills.find(f=>f.id===id);
   await mutateFills(fresh=> fresh.filter(f=>f.id!==id));
-  showToast("Llenado eliminado del historial");
+  if (target && target.stockApplied){
+    await mutateMeds(fresh=> fresh.map(m=>{
+      const match = (target.items||[]).find(it=>it.medId===m.id);
+      return match ? { ...m, stock: m.stock + match.qty } : m;
+    }));
+    showToast("Llenado eliminado — se restituyó el stock que había descontado");
+  } else {
+    showToast("Llenado eliminado del historial");
+  }
   render();
 }
 
@@ -738,8 +765,17 @@ async function applyPurchasePrices(purchase){
 }
 
 async function deletePurchase(id){
+  const target = state.purchases.find(p=>p.id===id);
   await mutatePurchases(fresh=> fresh.filter(p=>p.id!==id));
-  showToast("Compra eliminada del historial");
+  if (target && target.stockApplied){
+    await mutateMeds(fresh=> fresh.map(m=>{
+      const match = (target.items||[]).find(it=>it.medId===m.id);
+      return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
+    }));
+    showToast("Compra eliminada — se revirtió el stock que había sumado");
+  } else {
+    showToast("Compra eliminada del historial");
+  }
   render();
 }
 
@@ -923,6 +959,7 @@ function inventarioHTML(query=""){
             <button class="inv-view-btn ${view==="table"?"active":""}" data-view="table">☰ Tabla</button>
             <button class="inv-view-btn ${view==="grid"?"active":""}" data-view="grid">▦ Tarjetas</button>
           </div>
+          <button class="btn btn-outline" id="inv-count">✓ Conteo físico</button>
           <button class="btn btn-primary" id="inv-add">+ Nuevo</button>
         </div>
       </div>
@@ -1176,11 +1213,61 @@ function openFillModal(existing){
   });
 }
 
+function openStockCountModal(){
+  const sorted = [...state.meds].sort((a,b)=>a.name.localeCompare(b.name));
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="modal modal-wide">
+      <div class="label-eyebrow">Conteo físico — ajustar inventario</div>
+      <p class="muted small" style="margin-top:4px">Ingresa lo que realmente contaste en el pastillero/frascos. Esto reemplaza el stock del sistema (no suma ni resta) y queda registrado como un ajuste, separado de compras y llenados.</p>
+      <label style="display:block;margin-top:10px">Contado por<input id="count-by" placeholder="Ej. Aracely"/></label>
+      <div class="label-eyebrow" style="margin-top:16px">Conteo por medicamento</div>
+      <div class="stack" id="count-rows" style="margin-top:8px">
+        ${sorted.map(m=>`
+          <div class="purchase-row" style="grid-template-columns:1fr 90px 90px" data-med="${m.id}">
+            <span class="small">${esc(m.name)} ${esc(m.dose)}</span>
+            <span class="muted small mono" style="align-self:center">sist: ${m.stock}</span>
+            <input type="number" min="0" class="count-qty" value="${m.stock}"/>
+          </div>`).join("")}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="count-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="count-save">Guardar conteo</button>
+      </div>
+    </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) backdrop.remove(); });
+  backdrop.querySelector("#count-cancel").addEventListener("click", ()=>backdrop.remove());
+  backdrop.querySelector("#count-save").addEventListener("click", async ()=>{
+    const by = backdrop.querySelector("#count-by").value.trim();
+    const changes = [];
+    backdrop.querySelectorAll("[data-med]").forEach(row=>{
+      const medId = row.dataset.med;
+      const med = state.meds.find(m=>m.id===medId);
+      const counted = Number(row.querySelector(".count-qty").value);
+      if (med && isFinite(counted) && counted !== med.stock){
+        changes.push({ medId, medName:`${med.name} ${med.dose}`, before: med.stock, after: counted });
+      }
+    });
+    if (!changes.length){ showToast("No hubo cambios en el conteo"); backdrop.remove(); return; }
+    await mutateMeds(fresh=> fresh.map(m=>{
+      const match = changes.find(c=>c.medId===m.id);
+      return match ? { ...m, stock: match.after } : m;
+    }));
+    await mutateAdjustments(fresh=> [...fresh, { id:"a"+Date.now(), date: todayISO(), by, changes }]);
+    backdrop.remove();
+    showToast(`Conteo guardado — ${changes.length} medicamento(s) ajustado(s)`);
+    render();
+  });
+}
+
 function wireTabEvents(){
   if (state.tab==="inventario"){
     const search = document.getElementById("inv-search");
     search.addEventListener("input", ()=>{ document.getElementById("tab-content").innerHTML = inventarioHTML(search.value); wireTabEvents(); });
     document.getElementById("inv-add").addEventListener("click", ()=> requireAdmin(()=> openMedEditModal({id:"",name:"",dose:"",brand:"",stock:0,minThreshold:15,dailyDose:1,unit:"tab"})));
+    document.getElementById("inv-count").addEventListener("click", ()=> requireAdmin(()=> openStockCountModal()));
     document.querySelectorAll(".inv-minus").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>updateMedStock(b.dataset.id,-1))));
     document.querySelectorAll(".inv-plus").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>updateMedStock(b.dataset.id,1))));
     document.querySelectorAll(".inv-edit").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>openMedEditModal(state.meds.find(m=>m.id===b.dataset.id)))));

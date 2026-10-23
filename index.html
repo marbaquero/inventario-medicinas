@@ -53,7 +53,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .nav-item:hover{background:rgba(255,255,255,0.06);}
 .nav-item.active{background:rgba(255,255,255,0.14);color:#fff;font-weight:600;}
 .nav-icon{font-size:15px;width:18px;text-align:center;}
-.sidebar-foot{margin-top:auto;}
+.sidebar-foot{margin-top:4px;}
 .admin-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);font-size:12px;cursor:pointer;font-family:var(--sans);}
 .admin-toggle.on{background:rgba(111,154,114,0.25);border-color:var(--sage);color:#fff;}
 .admin-toggle .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);}
@@ -115,6 +115,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .badge-out{background:rgba(168,73,61,0.15);color:var(--brick);}
 
 .search-input{flex:1;max-width:340px;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-family:var(--sans);font-size:13px;}
+
+.autocomplete-wrap{position:relative;}
+.autocomplete-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;}
+.autocomplete-list.hidden{display:none;}
+.autocomplete-item{padding:9px 12px;font-size:13px;cursor:pointer;color:var(--ink);}
+.autocomplete-item:hover,.autocomplete-item.active{background:rgba(111,154,114,0.12);}
 .med-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
 .med-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--sage);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;}
 .med-card.status-low{border-left-color:var(--amber);}
@@ -204,13 +210,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
   .tab-icon{font-size:18px;}
   .tab-label{font-size:10px;font-weight:600;}
   .mobile-admin-row{
-    display:flex;justify-content:center;position:fixed;left:75%;right:6px;
-    bottom:calc(54px + env(safe-area-inset-bottom) + 4px);
-    padding:0;z-index:39;
+    display:flex;justify-content:center;position:fixed;left:0;right:0;
+    bottom:calc(54px + env(safe-area-inset-bottom));
+    background:var(--bg);border-top:1px solid var(--line);padding:8px 14px;z-index:39;
   }
   .mobile-admin-row .admin-toggle{
     width:auto;background:var(--surface);border:1px solid var(--line);color:var(--ink);
-    padding:6px 10px;font-size:10.5px;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-radius:20px;
   }
   .mobile-admin-row .admin-toggle .dot{background:var(--muted);}
   .mobile-admin-row .admin-toggle.on{background:rgba(111,154,114,0.15);border-color:var(--sage);color:var(--primary-dark);}
@@ -597,8 +602,11 @@ function openPurchaseModal(existing){
       <p class="muted small" style="margin-top:4px">Actualiza el precio de referencia de cada medicamento automáticamente.</p>
       <div class="form-grid">
         <label>Fecha<input id="p-date" type="date" value="${isEdit?existing.date:todayISO()}"/></label>
-        <label>Farmacia / sucursal<input id="p-pharmacy" list="p-pharmacy-list" value="${isEdit?esc(existing.pharmacy):''}" placeholder="Ej. Farmacia Cruz Azul — Carapungo" autocomplete="off"/>
-          <datalist id="p-pharmacy-list">${priorPharmacies.map(ph=>`<option value="${esc(ph)}"></option>`).join("")}</datalist>
+        <label>Farmacia / sucursal
+          <div class="autocomplete-wrap">
+            <input id="p-pharmacy" value="${isEdit?esc(existing.pharmacy):''}" placeholder="Ej. Farmacia Cruz Azul — Carapungo" autocomplete="off"/>
+            <div class="autocomplete-list hidden" id="p-pharmacy-list"></div>
+          </div>
         </label>
         <label>Referencia de factura<input id="p-ref" value="${isEdit?esc(existing.receiptRef||''):''}" placeholder="Opcional"/></label>
       </div>
@@ -622,6 +630,25 @@ function openPurchaseModal(existing){
   const rowsEl = backdrop.querySelector("#p-rows");
   const totalEl = backdrop.querySelector("#p-total");
   const saveBtn = backdrop.querySelector("#p-save");
+
+  // Pharmacy autocomplete — custom list instead of <datalist>, which Safari/iOS
+  // doesn't reliably show suggestions for on text inputs.
+  const pharInput = backdrop.querySelector("#p-pharmacy");
+  const pharList = backdrop.querySelector("#p-pharmacy-list");
+  function renderPharmacyList(){
+    const q = pharInput.value.trim().toLowerCase();
+    const matches = priorPharmacies.filter(ph=> !q || ph.toLowerCase().includes(q));
+    if (!matches.length){ pharList.classList.add("hidden"); pharList.innerHTML=""; return; }
+    pharList.innerHTML = matches.map(ph=>`<div class="autocomplete-item">${esc(ph)}</div>`).join("");
+    pharList.classList.remove("hidden");
+    pharList.querySelectorAll(".autocomplete-item").forEach(item=>{
+      item.addEventListener("mousedown", (e)=>{ e.preventDefault(); pharInput.value = item.textContent; pharList.classList.add("hidden"); updateTotal(); });
+      item.addEventListener("touchstart", (e)=>{ e.preventDefault(); pharInput.value = item.textContent; pharList.classList.add("hidden"); updateTotal(); });
+    });
+  }
+  pharInput.addEventListener("focus", renderPharmacyList);
+  pharInput.addEventListener("input", renderPharmacyList);
+  pharInput.addEventListener("blur", ()=> setTimeout(()=> pharList.classList.add("hidden"), 150));
 
   function medOptions(selected){
     return state.meds.map(m=>`<option value="${m.id}" ${m.id===selected?"selected":""}>${esc(m.name)} ${esc(m.dose)}</option>`).join("");

@@ -493,7 +493,7 @@ function requireAdmin(action){
   openPinModal(state.adminPin ? "enter" : "set");
 }
 
-function openPinModal(mode){
+function openPinModal(mode){ state.isAdmin = true; render(); if (state.pendingAction){ const a = state.pendingAction; state.pendingAction = null; a(); } return;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `

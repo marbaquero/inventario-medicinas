@@ -8,18 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Inventario" />
-
-<!-- ============================================================ -->
-<!-- CONFIGURACIÓN: pegue aquí sus credenciales de Supabase        -->
-<!-- ============================================================ -->
 <script>
   window.SUPABASE_URL = "https://ywegbbdnphbbqiimqhqf.supabase.co";
   window.SUPABASE_ANON_KEY = "sb_publishable_3RLMrZi5yuz9kxeAiMkSMw_y4foVtyu";
 </script>
-<!-- ============================================================ -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
 <style>
 :root{
   --bg:#F5F5F0; --surface:#FFFFFF; --ink:#1E2B27; --muted:#6E7A75;
@@ -32,17 +24,10 @@
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;}
 #app{display:flex;min-height:100vh;width:100%;}
 .hidden{display:none !important;}
-
-/* config warning */
-.config-warning{
-  position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;
-  padding:24px;z-index:100;
-}
+.config-warning{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100;}
 .config-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;max-width:440px;}
 .config-box h2{margin-top:0;}
 .config-box code{background:var(--bg);padding:2px 6px;border-radius:5px;font-family:var(--mono);font-size:12px;}
-
-/* Sidebar */
 .sidebar{width:220px;flex-shrink:0;background:var(--primary-dark);color:#EFF3F1;display:flex;flex-direction:column;padding:20px 14px;gap:24px;}
 .brand{display:flex;align-items:center;gap:10px;padding:0 6px;}
 .brand-mark{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;}
@@ -58,8 +43,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .admin-toggle.on{background:rgba(111,154,114,0.25);border-color:var(--sage);color:#fff;}
 .admin-toggle .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);}
 .admin-toggle.on .dot{background:var(--sage);}
-
-/* Main */
 .main{flex:1;display:flex;flex-direction:column;min-width:0;}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 28px 8px;}
 .sync-pill{font-size:11px;color:var(--sage);background:rgba(111,154,114,0.12);padding:3px 9px;border-radius:20px;font-family:var(--mono);}
@@ -69,7 +52,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 @media (max-width: 860px){.sync-banner{padding:8px 14px;}}
 .content{padding:12px 28px 100px;overflow-y:auto;}
 .label-eyebrow{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:600;}
-
 .stack-lg{display:flex;flex-direction:column;gap:20px;}
 .stack{display:flex;flex-direction:column;gap:10px;}
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
@@ -80,14 +62,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .mini-stat.mini-warn .mini-stat-num{color:var(--amber);}
 .mini-stat.mini-danger .mini-stat-num{color:var(--brick);}
 .notice-bar{background:rgba(192,138,52,0.10);border:1px solid rgba(192,138,52,0.3);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.5;}
-@media (max-width: 860px){
-  .stat-grid-6{grid-template-columns:repeat(3,1fr);}
-}
+@media (max-width: 860px){.stat-grid-6{grid-template-columns:repeat(3,1fr);}}
 .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;}
 .stat-num{font-family:var(--mono);font-size:28px;font-weight:600;margin-top:4px;}
 .warn-card .stat-num{color:var(--amber);}
 .danger-card .stat-num{color:var(--brick);}
-
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;}
 .panel-head h3{margin:0;font-size:15px;}
@@ -108,14 +87,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .muted{color:var(--muted);}
 .small{font-size:12px;}
 .hint{padding-top:4px;}
-
 .badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;}
 .badge-ok{background:rgba(111,154,114,0.15);color:var(--sage);}
 .badge-low{background:rgba(192,138,52,0.15);color:var(--amber);}
 .badge-out{background:rgba(168,73,61,0.15);color:var(--brick);}
-
 .search-input{flex:1;max-width:340px;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-family:var(--sans);font-size:13px;}
-
 .autocomplete-wrap{position:relative;}
 .autocomplete-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;}
 .autocomplete-list.hidden{display:none;}
@@ -130,11 +106,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .med-name{font-weight:700;font-size:13.5px;}
 .med-card-meta{display:flex;gap:14px;font-size:12px;color:var(--muted);}
 .med-card-actions{display:flex;gap:6px;}
-
 .view-toggle{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;}
 .view-toggle button{border:none;background:none;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--sans);}
 .view-toggle button.active{background:var(--primary);color:#fff;}
-
 .med-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;}
 .med-table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
 .med-table th{position:sticky;top:0;background:var(--surface);text-align:left;padding:9px 10px;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);}
@@ -148,14 +122,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .med-table .mt-sub{color:var(--muted);font-size:11px;}
 .med-table .mt-actions{display:flex;gap:5px;white-space:nowrap;}
 .med-table .mt-actions .btn{padding:5px 8px;font-size:11.5px;}
-@media (max-width:860px){
-  .med-table{font-size:12px;}
-  .med-table th,.med-table td{padding:7px 7px;}
-}
-
+@media (max-width:860px){.med-table{font-size:12px;}.med-table th,.med-table td{padding:7px 7px;}}
 .purchase-row{display:grid;grid-template-columns:1fr 70px 100px auto;gap:8px;align-items:center;}
 .purchase-row select,.purchase-row input{padding:8px 9px;border-radius:8px;border:1px solid var(--line);font-family:var(--sans);font-size:12.5px;}
-
 .dispense-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .dispense-form select,.dispense-form input{padding:9px 10px;border-radius:8px;border:1px solid var(--line);font-family:var(--sans);font-size:13px;}
 .dispense-form select{flex:1;min-width:160px;}
@@ -164,7 +133,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .fill-check{width:26px;height:26px;border-radius:50%;background:var(--sage);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 .fill-info{flex:1;}
 .history-day:last-child{border-bottom:none;padding-bottom:0;}
-
 .btn{border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
 .btn-primary{background:var(--primary);color:#fff;}
@@ -175,7 +143,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .btn-danger{background:none;border:1px solid rgba(168,73,61,0.35);color:var(--brick);}
 .btn-danger:hover:not(:disabled){background:rgba(168,73,61,0.08);}
 .btn.sm{padding:6px 11px;font-size:12px;}
-
 .modal-backdrop{position:fixed;inset:0;background:rgba(20,30,28,0.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;}
 .modal{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
 .modal-wide{max-width:560px;}
@@ -187,15 +154,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 .pin-modal{max-width:320px;}
 .pin-input{width:100%;margin-top:14px;padding:12px;font-size:20px;letter-spacing:6px;text-align:center;border-radius:9px;border:1px solid var(--line);font-family:var(--mono);}
 .error-text{color:var(--brick);font-size:12px;margin-top:8px;}
-
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--primary-dark);color:#fff;padding:10px 18px;border-radius:30px;font-size:12.5px;z-index:60;}
-
 .tabbar{display:none;}
 .mobile-admin-row{display:none;}
 .loading-shell{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;}
 .loader-ring{width:40px;height:40px;border-radius:50%;border:3px solid var(--ring-track);border-top-color:var(--primary);margin:0 auto;animation:spin 0.9s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 @media (max-width: 860px){
   .sidebar{display:none;}
   #app{flex-direction:column;}
@@ -209,14 +173,8 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
   .tab-btn.active{color:var(--primary);}
   .tab-icon{font-size:18px;}
   .tab-label{font-size:10px;font-weight:600;}
-  .mobile-admin-row{
-    display:flex;justify-content:center;position:fixed;left:0;right:0;
-    bottom:calc(54px + env(safe-area-inset-bottom));
-    background:var(--bg);border-top:1px solid var(--line);padding:8px 14px;z-index:39;
-  }
-  .mobile-admin-row .admin-toggle{
-    width:auto;background:var(--surface);border:1px solid var(--line);color:var(--ink);
-  }
+  .mobile-admin-row{display:flex;justify-content:center;position:fixed;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);padding:8px 14px;z-index:39;}
+  .mobile-admin-row .admin-toggle{width:auto;background:var(--surface);border:1px solid var(--line);color:var(--ink);}
   .mobile-admin-row .admin-toggle .dot{background:var(--muted);}
   .mobile-admin-row .admin-toggle.on{background:rgba(111,154,114,0.15);border-color:var(--sage);color:var(--primary-dark);}
   .mobile-admin-row .admin-toggle.on .dot{background:var(--sage);}
@@ -224,82 +182,54 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
 </style>
 </head>
 <body>
-
-<div id="config-warning" class="config-warning hidden">
-  <div class="config-box">
-    <h2>Falta configurar Supabase</h2>
-    <p class="muted small">Abra este archivo con un editor de texto y reemplace <code>PASTE_YOUR_SUPABASE_URL_HERE</code> y <code>PASTE_YOUR_SUPABASE_ANON_KEY_HERE</code> cerca del inicio del archivo con los valores de su proyecto de Supabase.</p>
-  </div>
-</div>
-
+<div id="config-warning" class="config-warning hidden"><div class="config-box"><h2>Falta configurar Supabase</h2><p class="muted small">Abra este archivo con un editor de texto y reemplace <code>PASTE_YOUR_SUPABASE_URL_HERE</code> y <code>PASTE_YOUR_SUPABASE_ANON_KEY_HERE</code> cerca del inicio del archivo con los valores de su proyecto de Supabase.</p></div></div>
 <div id="app"></div>
-
 <script type="module">
-/* ============================================================ */
-/* Error display — never leave a blank page                     */
-/* ============================================================ */
 function showFatalError(title, detail){
   const app = document.getElementById("app");
-  app.innerHTML = `
-    <div class="loading-shell">
-      <div class="config-box" style="text-align:left">
-        <h2 style="margin-top:0;color:var(--brick)">${title}</h2>
-        <p class="muted small">${detail}</p>
-        <p class="muted small">Tome una captura de esta pantalla y envíela para revisarlo.</p>
-      </div>
-    </div>`;
+  app.innerHTML = `<div class="loading-shell"><div class="config-box" style="text-align:left"><h2 style="margin-top:0;color:var(--brick)">${title}</h2><p class="muted small">${detail}</p><p class="muted small">Tome una captura de esta pantalla y envíela para revisarlo.</p></div></div>`;
 }
-window.addEventListener("error", (e)=>{
-  showFatalError("Error al cargar la aplicación", esc(e.message || String(e)));
-});
-window.addEventListener("unhandledrejection", (e)=>{
-  showFatalError("Error al cargar la aplicación", esc(e.reason?.message || String(e.reason)));
-});
-
-/* ============================================================ */
-/* Supabase client                                              */
-/* ============================================================ */
+window.addEventListener("error", (e)=>{ if(String(e.message||"").includes("supabase")) return; showFatalError("Error al cargar la aplicación", esc(e.message || String(e))); });
+window.addEventListener("unhandledrejection", (e)=>{ showFatalError("Error al cargar la aplicación", esc(e.reason?.message || String(e.reason))); });
+// FIX: sin librería CDN - usa fetch directo como Gastos, así nunca falla por cdn.jsdelivr.net bloqueado
 let supa = null;
+const H = {apikey: window.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.SUPABASE_ANON_KEY, 'Content-Type': 'application/json'};
 function initSupabase(){
-  if (!window.SUPABASE_URL || window.SUPABASE_URL.includes("PASTE_") ||
-      !window.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY.includes("PASTE_")) {
+  if (!window.SUPABASE_URL || window.SUPABASE_URL.includes("PASTE_") || !window.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY.includes("PASTE_")) {
     document.getElementById("config-warning").classList.remove("hidden");
     return false;
   }
-  if (!window.supabase || !window.supabase.createClient) {
-    showFatalError("No se pudo cargar la librería de Supabase", "La conexión a internet pudo haber bloqueado cdn.jsdelivr.net. Intente recargar la página o probar con otra red.");
-    return false;
-  }
-  supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   return true;
 }
-
 async function kvGet(key, fallback){
-  const { data, error } = await supa.from("kv_store").select("value").eq("key", key).maybeSingle();
-  if (error || !data) return fallback;
-  return data.value;
+  try{
+    const r = await fetch(window.SUPABASE_URL + '/rest/v1/kv_store?select=value&key=eq.' + encodeURIComponent(key), {headers: H});
+    if(!r.ok) return fallback;
+    const j = await r.json();
+    if(!j.length) return fallback;
+    return j[0].value;
+  }catch(e){ console.error('kvGet', e); return fallback; }
 }
 async function kvSet(key, value){
-  const { error } = await supa.from("kv_store").upsert({ key, value, updated_at: new Date().toISOString() });
-  if (error) console.error("kvSet error", key, error);
-  return !error;
+  try{
+    const r = await fetch(window.SUPABASE_URL + '/rest/v1/kv_store?on_conflict=key', {method:'POST', headers:{...H, Prefer:'resolution=merge-duplicates'}, body: JSON.stringify({key, value, updated_at: new Date().toISOString()})});
+    if(!r.ok) console.error('kvSet error', key, await r.text());
+    return r.ok;
+  }catch(e){ console.error('kvSet error', key, e); return false; }
 }
-
-/* ============================================================ */
-/* Seed data                                                    */
-/* ============================================================ */
+/* SEED - FIXED 11/9/26 conteo fisico, dailyDose corregido */
 const SEED_MEDS = [
-  { id:"m1", name:"Pregabalina", dose:"75mg", brand:"Prestat", stock:40, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.703 },
-  { id:"m2", name:"Ácido Acetilsalicílico", dose:"100mg", brand:"Aspirina Niños", stock:37, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.144 },
-  { id:"m3", name:"Quetiapina", dose:"25mg", brand:"", stock:30, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
-  { id:"m4", name:"Quetiapina", dose:"100mg", brand:"", stock:41, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.995 },
-  { id:"m5", name:"Simvastatina", dose:"20mg", brand:"", stock:39, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.225 },
-  { id:"m6", name:"Escitalopram", dose:"10mg", brand:"", stock:36, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
-  { id:"m7", name:"Espironolactona", dose:"25mg", brand:"Aldactone A", stock:43, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.2527 },
-  { id:"m8", name:"Losartán", dose:"100mg", brand:"", stock:37, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.325 },
-  { id:"m9", name:"Omeprazol", dose:"20mg", brand:"", stock:18, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
-  { id:"m10", name:"Memantina", dose:"10mg", brand:"", stock:42, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
-  { id:"m11", name:"Levotiroxina", dose:"100mcg", brand:"", stock:243, minThreshold:30, dailyDose:1, unit:"tab", pricePerPill:null },
+  { id:"m1", name:"Pregabalina", dose:"75mg", brand:"Prestat", stock:22, minThreshold:15, dailyDose:2, unit:"tab", pricePerPill:0.703 },
+  { id:"m2", name:"Ácido Acetilsalicílico", dose:"100mg", brand:"Aspirina Niños", stock:35, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.144 },
+  { id:"m3", name:"Quetiapina", dose:"25mg", brand:"", stock:2, minThreshold:15, dailyDose:2, unit:"tab", pricePerPill:null },
+  { id:"m4", name:"Quetiapina", dose:"100mg", brand:"", stock:84, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.995 },
+  { id:"m5", name:"Simvastatina", dose:"20mg", brand:"", stock:44, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.225 },
+  { id:"m6", name:"Escitalopram", dose:"10mg", brand:"", stock:64, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
+  { id:"m7", name:"Espironolactona", dose:"25mg", brand:"Aldactone A", stock:61, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.2527 },
+  { id:"m8", name:"Losartán", dose:"100mg", brand:"", stock:57, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:0.325 },
+  { id:"m9", name:"Omeprazol", dose:"20mg", brand:"", stock:90, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
+  { id:"m10", name:"Memantina", dose:"10mg", brand:"", stock:60, minThreshold:15, dailyDose:1, unit:"tab", pricePerPill:null },
+  { id:"m11", name:"Levotiroxina", dose:"100mcg", brand:"", stock:150, minThreshold:30, dailyDose:1, unit:"tab", pricePerPill:null },
 ];
 const SEED_PURCHASES = [{
   id:"p1", date:"2026-08-14", pharmacy:"Farmacia — Sucursal Carapungo", receiptRef:"416-003-000144332",
@@ -312,7 +242,6 @@ const SEED_PURCHASES = [{
     { name:"Prestat 75mg (Pregabalina)", qty:30, subtotal:21.09 },
   ], total:79.34, saved:27.6
 }];
-
 const todayISO = () => {
   const d = new Date();
   const y = d.getFullYear();
@@ -321,15 +250,10 @@ const todayISO = () => {
   return `${y}-${m}-${day}`;
 };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-
-/* ============================================================ */
-/* App state                                                    */
-/* ============================================================ */
 const state = {
   meds: [], purchases: [], dispensing: [], fills: [], adjustments: [], adminPin: null, isAdmin: false,
   tab: "dashboard", pendingAction: null, invView: "table",
 };
-
 async function loadAll(){
   const [m,p,d,f,s,adj] = await Promise.all([
     kvGet("medications", null), kvGet("purchases", null), kvGet("dispensing", null), kvGet("fills", null), kvGet("settings", null), kvGet("adjustments", null)
@@ -345,9 +269,6 @@ async function loadAll(){
   if (!d) await kvSet("dispensing", state.dispensing);
   if (!f) await kvSet("fills", state.fills);
   if (!adj) await kvSet("adjustments", state.adjustments);
-
-  // Migration: older purchase records saved item names only, with no medId link.
-  // Match them to a medication by name/brand + dose so price history can connect.
   const norm = (s) => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
   function findMedForItem(itemName){
     const in_ = norm(itemName);
@@ -372,8 +293,6 @@ async function loadAll(){
     return { ...p, items };
   });
   if (purchasesChanged) { state.purchases = migratedPurchases; await kvSet("purchases", state.purchases); }
-
-  // Backfill: fill in missing pricePerPill from purchase history (fixes older saved data)
   let changed = false;
   const backfilled = state.meds.map(med=>{
     if (med.pricePerPill) return med;
@@ -390,7 +309,6 @@ async function loadAll(){
   });
   if (changed) { state.meds = backfilled; await kvSet("medications", state.meds); }
 }
-
 function daysOfSupply(med){ const daily = med.dailyDose||1; if(daily<=0) return null; return Math.floor(med.stock/daily); }
 function statusOf(med){
   const d = daysOfSupply(med);
@@ -400,7 +318,6 @@ function statusOf(med){
   return "ok";
 }
 const STATUS_LABEL = { ok:"En regla", low:"Bajo stock", out:"Agotado" };
-
 function pricePer30(med){ return med.pricePerPill ? med.pricePerPill*30 : null; }
 function monthlyCost(med){ return med.pricePerPill ? med.pricePerPill * (med.dailyDose||1) * 30.44 : 0; }
 function stockValue(med){ return med.pricePerPill ? med.pricePerPill * med.stock : 0; }
@@ -419,7 +336,6 @@ function fmtDateEs(iso){
   const [y,m,d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
-
 function stockRingSVG(med, size=46){
   const status = statusOf(med);
   const target = Math.max(med.minThreshold*3, 30);
@@ -435,7 +351,6 @@ function stockRingSVG(med, size=46){
   </svg>`;
 }
 function badgeHTML(status){ return `<span class="badge badge-${status}">${STATUS_LABEL[status]}</span>`; }
-
 let lastSyncAt = Date.now();
 function syncAgoLabel(){
   const s = Math.max(0, Math.floor((Date.now()-lastSyncAt)/1000));
@@ -446,7 +361,6 @@ setInterval(()=>{
   const el = document.getElementById("sync-time");
   if (el) el.textContent = syncAgoLabel();
 }, 1000);
-
 let toastTimer;
 function showToast(msg){
   let t = document.getElementById("toast");
@@ -464,14 +378,10 @@ function flashSync(){
   el.classList.remove("hidden");
   clearTimeout(flashTimer); flashTimer = setTimeout(()=>el.classList.add("hidden"), 900);
 }
-
 async function persistMeds(next){ state.meds = next; await kvSet("medications", next); flashSync(); }
 async function persistPurchases(next){ state.purchases = next; await kvSet("purchases", next); flashSync(); }
 async function persistDispensing(next){ state.dispensing = next; await kvSet("dispensing", next); flashSync(); }
 async function persistFills(next){ state.fills = next; await kvSet("fills", next); flashSync(); }
-
-// Fresh-fetch-then-mutate: reads the latest saved copy right before writing, so a
-// change made from another tab/device isn't silently overwritten by stale local data.
 async function mutateArray(key, stateKey, mutatorFn){
   const fresh = await kvGet(key, state[stateKey]);
   const next = mutatorFn(fresh);
@@ -485,15 +395,13 @@ async function mutatePurchases(fn){ return mutateArray("purchases","purchases",f
 async function mutateDispensing(fn){ return mutateArray("dispensing","dispensing",fn); }
 async function mutateFills(fn){ return mutateArray("fills","fills",fn); }
 async function mutateAdjustments(fn){ return mutateArray("adjustments","adjustments",fn); }
-
-/* ---- admin gate ---- */
 function requireAdmin(action){
   if (state.isAdmin){ action(); return; }
   state.pendingAction = action;
   openPinModal(state.adminPin ? "enter" : "set");
 }
-
-function openPinModal(mode){ state.isAdmin = true; render(); if (state.pendingAction){ const a = state.pendingAction; state.pendingAction = null; a(); } return;
+/* FIX PIN: removed bypass line that set isAdmin=true without checking */
+function openPinModal(mode){
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
@@ -537,8 +445,6 @@ function openPinModal(mode){ state.isAdmin = true; render(); if (state.pendingAc
     }
   }
 }
-
-/* ---- med edit modal ---- */
 function openMedEditModal(med){
   const isNew = !med.name;
   const form = { ...med };
@@ -588,8 +494,6 @@ function openMedEditModal(med){
     render();
   });
 }
-
-/* ---- purchase modal ---- */
 function openPurchaseModal(existing){
   const isEdit = !!existing;
   const rows = isEdit ? existing.items.map(it=>({ medId: it.medId||"", qty: it.qty, subtotal: it.subtotal })) : [{ medId:"", qty:30, subtotal:0 }];
@@ -629,10 +533,6 @@ function openPurchaseModal(existing){
   document.body.appendChild(backdrop);
   const rowsEl = backdrop.querySelector("#p-rows");
   const totalEl = backdrop.querySelector("#p-total");
-  const saveBtn = backdrop.querySelector("#p-save");
-
-  // Pharmacy autocomplete — custom list instead of <datalist>, which Safari/iOS
-  // doesn't reliably show suggestions for on text inputs.
   const pharInput = backdrop.querySelector("#p-pharmacy");
   const pharList = backdrop.querySelector("#p-pharmacy-list");
   function renderPharmacyList(){
@@ -649,7 +549,6 @@ function openPurchaseModal(existing){
   pharInput.addEventListener("focus", renderPharmacyList);
   pharInput.addEventListener("input", renderPharmacyList);
   pharInput.addEventListener("blur", ()=> setTimeout(()=> pharList.classList.add("hidden"), 150));
-
   function medOptions(selected){
     return state.meds.map(m=>`<option value="${m.id}" ${m.id===selected?"selected":""}>${esc(m.name)} ${esc(m.dose)}</option>`).join("");
   }
@@ -706,8 +605,6 @@ function openPurchaseModal(existing){
     };
     await mutatePurchases(fresh=> isEdit ? fresh.map(p=>p.id===purchase.id?purchase:p) : [...fresh, purchase]);
     await applyPurchasePrices(purchase);
-    // Reverse any stock this same purchase already added in a prior save (edit case),
-    // then (re)apply only if the checkbox is checked now — prevents double-counting.
     if (isEdit && existing.stockApplied){
       await mutateMeds(fresh=> fresh.map(m=>{
         const match = (existing.items||[]).find(it=>it.medId===m.id);
@@ -725,8 +622,6 @@ function openPurchaseModal(existing){
     render();
   });
 }
-
-/* ---- actions ---- */
 async function updateMedStock(id, delta){
   await mutateMeds(fresh=> fresh.map(m=> m.id===id ? {...m, stock: Math.max(0, m.stock+delta)} : m));
   render();
@@ -739,7 +634,6 @@ async function dispensePill(medId, qty, by){
   await mutateMeds(fresh=> fresh.map(m=> m.id===medId ? {...m, stock: Math.max(0, m.stock-qty)} : m));
   showToast("Dosis registrada y descontada del stock");
 }
-
 async function registerFill(date, by, items, deductStock){
   const entry = { id:"f"+Date.now(), date, by, items, stockApplied: deductStock };
   await mutateFills(fresh=> [...fresh, entry]);
@@ -750,12 +644,9 @@ async function registerFill(date, by, items, deductStock){
     }));
   }
 }
-
 async function updateFill(id, date, by, items, deductStock){
   const existing = state.fills.find(f=>f.id===id);
   await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items, stockApplied: deductStock } : f));
-  // Reverse whatever this same fill already deducted in a prior save, then (re)apply
-  // only if the checkbox is checked now — prevents double-counting on edit.
   if (existing && existing.stockApplied){
     await mutateMeds(fresh=> fresh.map(m=>{
       const match = (existing.items||[]).find(it=>it.medId===m.id);
@@ -769,7 +660,6 @@ async function updateFill(id, date, by, items, deductStock){
     }));
   }
 }
-
 async function deleteFill(id){
   const target = state.fills.find(f=>f.id===id);
   await mutateFills(fresh=> fresh.filter(f=>f.id!==id));
@@ -784,9 +674,7 @@ async function deleteFill(id){
   }
   render();
 }
-
 async function applyPurchasePrices(purchase){
-  // Purchases are historical/price records only — they do not change stock.
   await mutateMeds(fresh=> fresh.map(m=>{
     const match = purchase.items.find(it=>it.medId===m.id);
     if (!match || !match.qty) return m;
@@ -794,7 +682,6 @@ async function applyPurchasePrices(purchase){
     return isFinite(pricePerPill) ? { ...m, pricePerPill } : m;
   }));
 }
-
 async function deletePurchase(id){
   const target = state.purchases.find(p=>p.id===id);
   await mutatePurchases(fresh=> fresh.filter(p=>p.id!==id));
@@ -809,60 +696,26 @@ async function deletePurchase(id){
   }
   render();
 }
-
-/* ============================================================ */
-/* Render                                                       */
-/* ============================================================ */
 function tabLabel(t){ return {dashboard:"Dashboard",inventario:"Inventario",compras:"Compras",pastillero:"Pastillero"}[t]; }
-
 function render(){
   const app = document.getElementById("app");
   app.innerHTML = `
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">℞</div>
-        <div><div class="brand-title">Inventario</div><div class="brand-sub">Cuidado Rosa Emilia</div></div>
-      </div>
+      <div class="brand"><div class="brand-mark">℞</div><div><div class="brand-title">Inventario</div><div class="brand-sub">Cuidado Rosa Emilia</div></div></div>
       <nav class="nav">
-        ${["dashboard","inventario","compras","pastillero"].map(t=>`
-          <button class="nav-item ${state.tab===t?"active":""}" data-tab="${t}">
-            <span class="nav-icon">${{dashboard:"◈",inventario:"▤",compras:"⛁",pastillero:"◎"}[t]}</span>
-            <span>${tabLabel(t)}</span>
-          </button>`).join("")}
+        ${["dashboard","inventario","compras","pastillero"].map(t=>`<button class="nav-item ${state.tab===t?"active":""}" data-tab="${t}"><span class="nav-icon">${{dashboard:"◈",inventario:"▤",compras:"⛁",pastillero:"◎"}[t]}</span><span>${tabLabel(t)}</span></button>`).join("")}
       </nav>
-      <div class="sidebar-foot">
-        <button class="admin-toggle ${state.isAdmin?"on":""}" id="admin-toggle">
-          <span class="dot"></span>${state.isAdmin?"Administrador activo":"Ingresar como admin"}
-        </button>
-      </div>
+      <div class="sidebar-foot"><button class="admin-toggle ${state.isAdmin?"on":""}" id="admin-toggle"><span class="dot"></span>${state.isAdmin?"Administrador activo":"Ingresar como admin"}</button></div>
     </aside>
     <main class="main">
-      <div class="sync-banner">
-        <span class="sync-dot"></span>
-        Sincronización automática activa · <span id="sync-time">${syncAgoLabel()}</span>
-      </div>
-      <header class="topbar">
-        <div class="label-eyebrow">${tabLabel(state.tab)}</div>
-        <div><span id="sync-pill" class="sync-pill hidden">Sincronizado ✓</span></div>
-      </header>
+      <div class="sync-banner"><span class="sync-dot"></span>Sincronización automática activa · <span id="sync-time">${syncAgoLabel()}</span></div>
+      <header class="topbar"><div class="label-eyebrow">${tabLabel(state.tab)}</div><div><span id="sync-pill" class="sync-pill hidden">Sincronizado ✓</span></div></header>
       <div class="content" id="tab-content"></div>
     </main>
-    <nav class="tabbar">
-      ${["dashboard","inventario","compras","pastillero"].map(t=>`
-        <button class="tab-btn ${state.tab===t?"active":""}" data-tab="${t}">
-          <span class="tab-icon">${{dashboard:"◈",inventario:"▤",compras:"⛁",pastillero:"◎"}[t]}</span>
-          <span class="tab-label">${tabLabel(t)}</span>
-        </button>`).join("")}
-    </nav>
-    <div class="mobile-admin-row">
-      <button class="admin-toggle ${state.isAdmin?"on":""}" id="admin-toggle-mobile">
-        <span class="dot"></span>${state.isAdmin?"Administrador activo":"Ingresar como admin"}
-      </button>
-    </div>
+    <nav class="tabbar">${["dashboard","inventario","compras","pastillero"].map(t=>`<button class="tab-btn ${state.tab===t?"active":""}" data-tab="${t}"><span class="tab-icon">${{dashboard:"◈",inventario:"▤",compras:"⛁",pastillero:"◎"}[t]}</span><span class="tab-label">${tabLabel(t)}</span></button>`).join("")}</nav>
+    <div class="mobile-admin-row"><button class="admin-toggle ${state.isAdmin?"on":""}" id="admin-toggle-mobile"><span class="dot"></span>${state.isAdmin?"Administrador activo":"Ingresar como admin"}</button></div>
   `;
-  app.querySelectorAll("[data-tab]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{ state.tab = btn.dataset.tab; render(); });
-  });
+  app.querySelectorAll("[data-tab]").forEach(btn=>{ btn.addEventListener("click", ()=>{ state.tab = btn.dataset.tab; render(); }); });
   const adminHandler = ()=>{
     if (state.isAdmin){ state.isAdmin=false; showToast("Modo administrador desactivado"); render(); }
     else { requireAdmin(()=>{}); }
@@ -872,7 +725,6 @@ function render(){
   if (adminBtnMobile) adminBtnMobile.addEventListener("click", adminHandler);
   renderTabContent();
 }
-
 function renderTabContent(){
   const el = document.getElementById("tab-content");
   if (state.tab==="dashboard") el.innerHTML = dashboardHTML();
@@ -881,7 +733,6 @@ function renderTabContent(){
   if (state.tab==="pastillero") el.innerHTML = pastilleroHTML();
   wireTabEvents();
 }
-
 function dashboardHTML(){
   const lowStock = state.meds.filter(m=>statusOf(m)!=="ok");
   const outOfStock = state.meds.filter(m=>statusOf(m)==="out");
@@ -891,11 +742,7 @@ function dashboardHTML(){
   const totalMonthlyCost = state.meds.reduce((s,m)=>s+monthlyCost(m),0);
   const totalValue = state.meds.reduce((s,m)=>s+stockValue(m),0);
   const missingPrice = state.meds.filter(m=>!m.pricePerPill);
-  const soonest = state.meds
-    .map(m=>({ med:m, refill: nextRefillDate(m) }))
-    .filter(x=>x.refill)
-    .sort((a,b)=> a.refill < b.refill ? -1 : 1)
-    .slice(0,3);
+  const soonest = state.meds.map(m=>({ med:m, refill: nextRefillDate(m) })).filter(x=>x.refill).sort((a,b)=> a.refill < b.refill ? -1 : 1).slice(0,3);
   const in30days = new Date(); in30days.setDate(in30days.getDate()+30);
   const in30ISO = `${in30days.getFullYear()}-${String(in30days.getMonth()+1).padStart(2,"0")}-${String(in30days.getDate()).padStart(2,"0")}`;
   const dueSoon = state.meds.filter(m=>{ const r = nextRefillDate(m); return r && r <= in30ISO; });
@@ -904,7 +751,6 @@ function dashboardHTML(){
     const restock = Math.max((m.minThreshold*2) - m.stock, m.dailyDose*30);
     return s + restock * m.pricePerPill;
   }, 0);
-
   return `
     <div class="stack-lg">
       <div class="stat-grid-6">
@@ -915,68 +761,19 @@ function dashboardHTML(){
         <div class="mini-stat"><div class="mini-stat-num">$${totalMonthlyCost.toFixed(0)}</div><div class="mini-stat-label">Costo mensual</div></div>
         <div class="mini-stat"><div class="mini-stat-num">$${totalValue.toFixed(0)}</div><div class="mini-stat-label">Valor del stock</div></div>
       </div>
-
-      ${missingPrice.length ? `
-      <div class="notice-bar">
-        ⚠ ${missingPrice.length} medicamento(s) sin precio registrado (${missingPrice.map(m=>esc(m.name)).join(", ")}) — el costo mensual no los incluye. Regístreles una compra o edítelos con un precio manual.
-      </div>` : ""}
-
+      ${missingPrice.length ? `<div class="notice-bar">⚠ ${missingPrice.length} medicamento(s) sin precio registrado (${missingPrice.map(m=>esc(m.name)).join(", ")}) — el costo mensual no los incluye. Regístreles una compra o edítelos con un precio manual.</div>` : ""}
       <div class="two-col">
-        <div class="panel">
-          <div class="label-eyebrow">Compra recomendada · próximos 30 días</div>
-          <div class="stat-num" style="font-size:24px;margin-top:6px">$${dueSoonCost.toFixed(2)}</div>
-          <div class="muted small" style="margin-top:2px">${dueSoon.length} medicamento(s) llegarán a su mínimo en este período</div>
-        </div>
-        <div class="panel">
-          <div class="label-eyebrow">Sincronización</div>
-          <div class="stat-num" style="font-size:24px;margin-top:6px">${state.purchases.length}</div>
-          <div class="muted small" style="margin-top:2px">compras registradas · ${state.fills.length} llenados del pastillero</div>
-        </div>
+        <div class="panel"><div class="label-eyebrow">Compra recomendada · próximos 30 días</div><div class="stat-num" style="font-size:24px;margin-top:6px">$${dueSoonCost.toFixed(2)}</div><div class="muted small" style="margin-top:2px">${dueSoon.length} medicamento(s) llegarán a su mínimo en este período</div></div>
+        <div class="panel"><div class="label-eyebrow">Sincronización</div><div class="stat-num" style="font-size:24px;margin-top:6px">${state.purchases.length}</div><div class="muted small" style="margin-top:2px">compras registradas · ${state.fills.length} llenados del pastillero</div></div>
       </div>
-
-      <section class="panel">
-        <div class="panel-head"><h3>Próximos a agotarse</h3><span class="muted small">según stock actual y dosis diaria</span></div>
-        <div class="alert-list">
-          ${soonest.map(({med,refill})=>`
-            <div class="alert-row">
-              ${stockRingSVG(med,40)}
-              <div class="alert-info">
-                <div class="alert-name">${esc(med.name)} ${esc(med.dose)}</div>
-                <div class="muted small">${med.stock} ${med.unit} restantes · ${med.dailyDose||1}/día · agotamiento estimado ${fmtDateEs(refill)}</div>
-              </div>
-              ${badgeHTML(statusOf(med))}
-            </div>`).join("") || `<div class="muted small">Sin datos suficientes para estimar.</div>`}
-        </div>
-      </section>
-      ${lowStock.length ? `
-      <section class="panel">
-        <div class="panel-head"><h3>Atención requerida</h3><span class="muted small">${lowStock.length} medicamento(s) por debajo del umbral</span></div>
-        <div class="alert-list">
-          ${lowStock.map(m=>`
-            <div class="alert-row">
-              ${stockRingSVG(m,40)}
-              <div class="alert-info"><div class="alert-name">${esc(m.name)} ${esc(m.dose)}</div><div class="muted small">${m.stock} ${m.unit} restantes · mínimo ${m.minThreshold}</div></div>
-              ${badgeHTML(statusOf(m))}
-            </div>`).join("")}
-        </div>
-      </section>` : ""}
+      <section class="panel"><div class="panel-head"><h3>Próximos a agotarse</h3><span class="muted small">según stock actual y dosis diaria</span></div><div class="alert-list">${soonest.map(({med,refill})=>`<div class="alert-row">${stockRingSVG(med,40)}<div class="alert-info"><div class="alert-name">${esc(med.name)} ${esc(med.dose)}</div><div class="muted small">${med.stock} ${med.unit} restantes · ${med.dailyDose||1}/día · agotamiento estimado ${fmtDateEs(refill)}</div></div>${badgeHTML(statusOf(med))}</div>`).join("") || `<div class="muted small">Sin datos suficientes para estimar.</div>`}</div></section>
+      ${lowStock.length ? `<section class="panel"><div class="panel-head"><h3>Atención requerida</h3><span class="muted small">${lowStock.length} medicamento(s) por debajo del umbral</span></div><div class="alert-list">${lowStock.map(m=>`<div class="alert-row">${stockRingSVG(m,40)}<div class="alert-info"><div class="alert-name">${esc(m.name)} ${esc(m.dose)}</div><div class="muted small">${m.stock} ${m.unit} restantes · mínimo ${m.minThreshold}</div></div>${badgeHTML(statusOf(m))}</div>`).join("")}</div></section>` : ""}
       <div class="two-col">
-        <section class="panel">
-          <div class="panel-head"><h3>Última compra</h3></div>
-          ${recentPurchases.length ? `
-            <div class="row-between"><div class="muted small">${recentPurchases[0].date}</div><div class="mono strong">$${Number(recentPurchases[0].total).toFixed(2)}</div></div>
-            <div class="muted small" style="margin-top:4px">${esc(recentPurchases[0].pharmacy)}</div>
-            <ul class="mini-list" style="margin-top:10px">${recentPurchases[0].items.slice(0,5).map(it=>`<li><span>${esc(it.name)}</span><span class="mono">×${it.qty}</span></li>`).join("")}</ul>
-          ` : `<div class="muted small">Sin compras registradas.</div>`}
-        </section>
-        <section class="panel">
-          <div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>
-          ${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}
-        </section>
+        <section class="panel"><div class="panel-head"><h3>Última compra</h3></div>${recentPurchases.length ? `<div class="row-between"><div class="muted small">${recentPurchases[0].date}</div><div class="mono strong">$${Number(recentPurchases[0].total).toFixed(2)}</div></div><div class="muted small" style="margin-top:4px">${esc(recentPurchases[0].pharmacy)}</div><ul class="mini-list" style="margin-top:10px">${recentPurchases[0].items.slice(0,5).map(it=>`<li><span>${esc(it.name)}</span><span class="mono">×${it.qty}</span></li>`).join("")}</ul>` : `<div class="muted small">Sin compras registradas.</div>`}</section>
+        <section class="panel"><div class="panel-head"><h3>Pastillero — últimos llenados</h3></div>${recentFills.length ? `<ul class="mini-list">${recentFills.map(f=>`<li><span>${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</span><span class="mono">${f.items.length} meds</span></li>`).join("")}</ul>` : `<div class="muted small">Sin llenados registrados aún.</div>`}</section>
       </div>
     </div>`;
 }
-
 function inventarioHTML(query=""){
   const filtered = state.meds.filter(m=>(m.name+m.dose+m.brand).toLowerCase().includes(query.toLowerCase()));
   const sorted = [...filtered].sort((a,b)=>a.name.localeCompare(b.name));
@@ -986,10 +783,7 @@ function inventarioHTML(query=""){
       <div class="row-between">
         <input class="search-input" id="inv-search" placeholder="Buscar medicamento…" value="${esc(query)}"/>
         <div class="row-between" style="gap:8px;">
-          <div class="view-toggle">
-            <button class="inv-view-btn ${view==="table"?"active":""}" data-view="table">☰ Tabla</button>
-            <button class="inv-view-btn ${view==="grid"?"active":""}" data-view="grid">▦ Tarjetas</button>
-          </div>
+          <div class="view-toggle"><button class="inv-view-btn ${view==="table"?"active":""}" data-view="table">☰ Tabla</button><button class="inv-view-btn ${view==="grid"?"active":""}" data-view="grid">▦ Tarjetas</button></div>
           <button class="btn btn-outline" id="inv-count">✓ Conteo físico</button>
           <button class="btn btn-primary" id="inv-add">+ Nuevo</button>
         </div>
@@ -998,187 +792,44 @@ function inventarioHTML(query=""){
       ${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para editar o ajustar stock.</div>` : ""}
     </div>`;
 }
-
 function inventarioGridHTML(sorted){
-  return `
-      <div class="med-grid">
-        ${sorted.map(m=>{
+  return `<div class="med-grid">${sorted.map(m=>{
           const status = statusOf(m); const dos = daysOfSupply(m);
           const p30 = pricePer30(m);
           const refill = nextRefillDate(m);
-          return `
-          <div class="med-card status-${status}">
-            <div class="med-card-top">
-              ${stockRingSVG(m)}
-              <div class="med-card-title"><div class="med-name">${esc(m.name)}</div><div class="muted small">${esc(m.dose)}${m.brand?` · ${esc(m.brand)}`:""}</div></div>
-              ${badgeHTML(status)}
-            </div>
-            ${p30 ? `<div class="mono small" style="color:var(--primary)">$${p30.toFixed(2)}/30u · $${m.pricePerPill.toFixed(4)}/pastilla</div>` : ""}
-            <div class="med-card-meta"><span>Mínimo: <b class="mono">${m.minThreshold}</b></span><span>Dosis diaria: <b class="mono">${m.dailyDose||1}</b>/día</span>${dos!==null?`<span>≈ <b class="mono">${dos}</b> días</span>`:""}</div>
-            ${refill ? `<div class="muted small">Agotamiento estimado: <span class="mono">${fmtDateEs(refill)}</span></div>` : ""}
-            <div class="med-card-actions">
-              <button class="btn btn-ghost sm inv-minus" data-id="${m.id}">−1</button>
-              <button class="btn btn-ghost sm inv-plus" data-id="${m.id}">+1</button>
-              <button class="btn btn-outline sm inv-edit" data-id="${m.id}">Editar</button>
-            </div>
-          </div>`;
-        }).join("")}
-      </div>`;
+          return `<div class="med-card status-${status}"><div class="med-card-top">${stockRingSVG(m)}<div class="med-card-title"><div class="med-name">${esc(m.name)}</div><div class="muted small">${esc(m.dose)}${m.brand?` · ${esc(m.brand)}`:""}</div></div>${badgeHTML(status)}</div>${p30 ? `<div class="mono small" style="color:var(--primary)">$${p30.toFixed(2)}/30u · $${m.pricePerPill.toFixed(4)}/pastilla</div>` : ""}<div class="med-card-meta"><span>Mínimo: <b class="mono">${m.minThreshold}</b></span><span>Dosis diaria: <b class="mono">${m.dailyDose||1}</b>/día</span>${dos!==null?`<span>≈ <b class="mono">${dos}</b> días</span>`:""}</div>${refill ? `<div class="muted small">Agotamiento estimado: <span class="mono">${fmtDateEs(refill)}</span></div>` : ""}<div class="med-card-actions"><button class="btn btn-ghost sm inv-minus" data-id="${m.id}">−1</button><button class="btn btn-ghost sm inv-plus" data-id="${m.id}">+1</button><button class="btn btn-outline sm inv-edit" data-id="${m.id}">Editar</button></div></div>`;
+        }).join("")}</div>`;
 }
-
 function inventarioTableHTML(sorted){
-  return `
-      <div class="med-table-wrap">
-        <table class="med-table">
-          <thead>
-            <tr>
-              <th>Medicamento</th>
-              <th>Estado</th>
-              <th>Stock</th>
-              <th>Mínimo</th>
-              <th>Dosis/día</th>
-              <th>Días rest.</th>
-              <th>Agotamiento</th>
-              <th>$/pastilla</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sorted.map(m=>{
+  return `<div class="med-table-wrap"><table class="med-table"><thead><tr><th>Medicamento</th><th>Estado</th><th>Stock</th><th>Mínimo</th><th>Dosis/día</th><th>Días rest.</th><th>Agotamiento</th><th>$/pastilla</th><th>Acciones</th></tr></thead><tbody>${sorted.map(m=>{
               const status = statusOf(m); const dos = daysOfSupply(m);
               const refill = nextRefillDate(m);
-              return `
-              <tr class="status-${status}">
-                <td><div class="mt-name">${esc(m.name)}</div><div class="mt-sub">${esc(m.dose)}${m.brand?` · ${esc(m.brand)}`:""}</div></td>
-                <td>${badgeHTML(status)}</td>
-                <td class="mono strong">${m.stock}</td>
-                <td class="mono muted">${m.minThreshold}</td>
-                <td class="mono muted">${m.dailyDose||1}</td>
-                <td class="mono">${dos!==null?dos:"—"}</td>
-                <td class="mono small">${refill?fmtDateEs(refill):"—"}</td>
-                <td class="mono small">${m.pricePerPill?("$"+m.pricePerPill.toFixed(4)):"—"}</td>
-                <td>
-                  <div class="mt-actions">
-                    <button class="btn btn-ghost sm inv-minus" data-id="${m.id}">−1</button>
-                    <button class="btn btn-ghost sm inv-plus" data-id="${m.id}">+1</button>
-                    <button class="btn btn-outline sm inv-edit" data-id="${m.id}">Editar</button>
-                  </div>
-                </td>
-              </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>`;
+              return `<tr class="status-${status}"><td><div class="mt-name">${esc(m.name)}</div><div class="mt-sub">${esc(m.dose)}${m.brand?` · ${esc(m.brand)}`:""}</div></td><td>${badgeHTML(status)}</td><td class="mono strong">${m.stock}</td><td class="mono muted">${m.minThreshold}</td><td class="mono muted">${m.dailyDose||1}</td><td class="mono">${dos!==null?dos:"—"}</td><td class="mono small">${refill?fmtDateEs(refill):"—"}</td><td class="mono small">${m.pricePerPill?("$"+m.pricePerPill.toFixed(4)):"—"}</td><td><div class="mt-actions"><button class="btn btn-ghost sm inv-minus" data-id="${m.id}">−1</button><button class="btn btn-ghost sm inv-plus" data-id="${m.id}">+1</button><button class="btn btn-outline sm inv-edit" data-id="${m.id}">Editar</button></div></td></tr>`;
+            }).join("")}</tbody></table></div>`;
 }
-
 function comprasHTML(){
   const sorted = [...state.purchases].sort((a,b)=> a.date<b.date?1:-1);
-  return `
-    <div class="stack-lg">
-      <div class="row-between">
-        <div class="muted small">${state.purchases.length} compra(s) registrada(s)</div>
-        <button class="btn btn-primary" id="pur-add">+ Registrar compra</button>
-      </div>
-      <div class="stack">
-        ${sorted.map(p=>`
-          <div class="panel">
-            <div class="row-between">
-              <div><div class="strong">${esc(p.pharmacy)}</div><div class="muted small">${p.date}${p.receiptRef?` · Ref. ${esc(p.receiptRef)}`:""}</div></div>
-              <div class="text-right"><div class="mono strong">$${Number(p.total).toFixed(2)}</div>${p.saved?`<div class="muted small">Ahorro $${Number(p.saved).toFixed(2)}</div>`:""}</div>
-            </div>
-            <ul class="mini-list" style="margin-top:10px">${p.items.map(it=>`<li><span>${esc(it.name)} <span class="mono muted">×${it.qty}</span></span><span class="mono">$${Number(it.subtotal).toFixed(2)}</span></li>`).join("")}</ul>
-            <div class="med-card-actions" style="margin-top:10px">
-              <button class="btn btn-outline sm pur-edit" data-id="${p.id}">Editar</button>
-              <button class="btn btn-danger sm pur-delete" data-id="${p.id}">Borrar</button>
-            </div>
-          </div>`).join("")}
-        ${!state.purchases.length?`<div class="muted small">Sin compras registradas.</div>`:""}
-      </div>
-      ${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar compras.</div>` : ""}
-    </div>`;
+  return `<div class="stack-lg"><div class="row-between"><div class="muted small">${state.purchases.length} compra(s) registrada(s)</div><button class="btn btn-primary" id="pur-add">+ Registrar compra</button></div><div class="stack">${sorted.map(p=>`<div class="panel"><div class="row-between"><div><div class="strong">${esc(p.pharmacy)}</div><div class="muted small">${p.date}${p.receiptRef?` · Ref. ${esc(p.receiptRef)}`:""}</div></div><div class="text-right"><div class="mono strong">$${Number(p.total).toFixed(2)}</div>${p.saved?`<div class="muted small">Ahorro $${Number(p.saved).toFixed(2)}</div>`:""}</div></div><ul class="mini-list" style="margin-top:10px">${p.items.map(it=>`<li><span>${esc(it.name)} <span class="mono muted">×${it.qty}</span></span><span class="mono">$${Number(it.subtotal).toFixed(2)}</span></li>`).join("")}</ul><div class="med-card-actions" style="margin-top:10px"><button class="btn btn-outline sm pur-edit" data-id="${p.id}">Editar</button><button class="btn btn-danger sm pur-delete" data-id="${p.id}">Borrar</button></div></div>`).join("")}${!state.purchases.length?`<div class="muted small">Sin compras registradas.</div>`:""}</div>${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar compras.</div>` : ""}</div>`;
 }
-
 function pastilleroHTML(){
   const todayEntries = state.dispensing.filter(d=>d.date===todayISO());
   const map = {};
   [...state.dispensing].forEach(d=>{ map[d.date]=map[d.date]||[]; map[d.date].push(d); });
   const historyByDate = Object.entries(map).sort((a,b)=> a[0]<b[0]?1:-1).slice(0,7);
-
   const sortedFills = [...state.fills].sort((a,b)=> a.date<b.date?1:-1);
   const fillRows = sortedFills.map((f,idx)=>{
     const weekNum = sortedFills.length - idx;
     const prev = sortedFills[idx+1];
     let gap = "";
-    if (prev){
-      const days = Math.round((new Date(f.date) - new Date(prev.date)) / 86400000);
-      gap = `${days} día${days===1?"":"s"}`;
-    } else {
-      gap = "primer registro";
-    }
-    return `
-      <div class="fill-row">
-        <span class="fill-check">✓</span>
-        <div class="fill-info">
-          <div class="strong">${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</div>
-          <div class="muted small">Semana ${weekNum}${idx===0?" · último registrado":""} · ${f.items.length} medicamentos</div>
-        </div>
-        <span class="badge badge-ok">${gap}</span>
-        <button class="btn btn-outline sm fill-edit" data-id="${f.id}">Editar</button>
-        <button class="btn btn-danger sm fill-delete" data-id="${f.id}">Borrar</button>
-      </div>`;
+    if (prev){ const days = Math.round((new Date(f.date) - new Date(prev.date)) / 86400000); gap = `${days} día${days===1?"":"s"}`; } else { gap = "primer registro"; }
+    return `<div class="fill-row"><span class="fill-check">✓</span><div class="fill-info"><div class="strong">${fmtDateEs(f.date)}${f.by?` · ${esc(f.by)}`:""}</div><div class="muted small">Semana ${weekNum}${idx===0?" · último registrado":""} · ${f.items.length} medicamentos</div></div><span class="badge badge-ok">${gap}</span><button class="btn btn-outline sm fill-edit" data-id="${f.id}">Editar</button><button class="btn btn-danger sm fill-delete" data-id="${f.id}">Borrar</button></div>`;
   }).join("");
-
-  return `
-    <div class="stack-lg">
-      <section class="panel">
-        <div class="panel-head">
-          <h3>Pastillero — llenado semanal</h3>
-          <span class="muted small">Descuenta del stock (desmarcable al registrar)</span>
-        </div>
-        <button class="btn btn-primary" id="fill-add">+ Registrar llenado (las 11 de una vez)</button>
-        <div class="stack" style="margin-top:14px">
-          ${fillRows || `<div class="muted small">Sin llenados registrados aún.</div>`}
-        </div>
-        ${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar un llenado.</div>` : ""}
-      </section>
-
-      <section class="panel">
-        <div class="panel-head"><h3>Registro rápido — una sola dosis</h3><span class="muted small">Descuenta del stock</span></div>
-        <div class="dispense-form">
-          <select id="disp-med">${state.meds.map(m=>`<option value="${m.id}">${esc(m.name)} ${esc(m.dose)}</option>`).join("")}</select>
-          <input id="disp-qty" type="number" min="1" value="1" style="width:70px"/>
-          <input id="disp-by" placeholder="Cuidadora (opcional)"/>
-          <button class="btn btn-primary" id="disp-submit">Registrar</button>
-        </div>
-        <button class="btn btn-ghost sm" id="disp-quickadd" style="margin-top:8px">+ Agregar medicamento nuevo</button>
-        ${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar dosis.</div>` : ""}
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h3>Hoy</h3><span class="muted small">${todayISO()}</span></div>
-        ${todayEntries.length ? `<ul class="mini-list">${todayEntries.map(d=>`<li><span>${esc(d.medName)}${d.by?` · ${esc(d.by)}`:""}</span><span class="mono">×${d.qty}</span></li>`).join("")}</ul>` : `<div class="muted small">Sin dosis registradas hoy.</div>`}
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h3>Últimos 7 días con actividad</h3></div>
-        <div class="stack">
-          ${historyByDate.map(([date,entries])=>`
-            <div class="history-day">
-              <div class="mono strong small">${date}</div>
-              <ul class="mini-list">${entries.map(d=>`<li><span>${esc(d.medName)}${d.by?` · ${esc(d.by)}`:""}</span><span class="mono">×${d.qty}</span></li>`).join("")}</ul>
-            </div>`).join("")}
-          ${!historyByDate.length?`<div class="muted small">Sin historial aún.</div>`:""}
-        </div>
-      </section>
-    </div>`;
+  return `<div class="stack-lg"><section class="panel"><div class="panel-head"><h3>Pastillero — llenado semanal</h3><span class="muted small">Descuenta del stock (desmarcable al registrar)</span></div><button class="btn btn-primary" id="fill-add">+ Registrar llenado (las 11 de una vez)</button><div class="stack" style="margin-top:14px">${fillRows || `<div class="muted small">Sin llenados registrados aún.</div>`}</div>${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar un llenado.</div>` : ""}</section><section class="panel"><div class="panel-head"><h3>Registro rápido — una sola dosis</h3><span class="muted small">Descuenta del stock</span></div><div class="dispense-form"><select id="disp-med">${state.meds.map(m=>`<option value="${m.id}">${esc(m.name)} ${esc(m.dose)}</option>`).join("")}</select><input id="disp-qty" type="number" min="1" value="1" style="width:70px"/><input id="disp-by" placeholder="Cuidadora (opcional)"/><button class="btn btn-primary" id="disp-submit">Registrar</button></div><button class="btn btn-ghost sm" id="disp-quickadd" style="margin-top:8px">+ Agregar medicamento nuevo</button>${!state.isAdmin ? `<div class="muted small hint">Ingrese como administrador para registrar dosis.</div>` : ""}</section><section class="panel"><div class="panel-head"><h3>Hoy</h3><span class="muted small">${todayISO()}</span></div>${todayEntries.length ? `<ul class="mini-list">${todayEntries.map(d=>`<li><span>${esc(d.medName)}${d.by?` · ${esc(d.by)}`:""}</span><span class="mono">×${d.qty}</span></li>`).join("")}</ul>` : `<div class="muted small">Sin dosis registradas hoy.</div>`}</section><section class="panel"><div class="panel-head"><h3>Últimos 7 días con actividad</h3></div><div class="stack">${historyByDate.map(([date,entries])=>`<div class="history-day"><div class="mono strong small">${date}</div><ul class="mini-list">${entries.map(d=>`<li><span>${esc(d.medName)}${d.by?` · ${esc(d.by)}`:""}</span><span class="mono">×${d.qty}</span></li>`).join("")}</ul></div>`).join("")}${!historyByDate.length?`<div class="muted small">Sin historial aún.</div>`:""}</div></section></div>`;
 }
-
-/* ---- batch fill modal (register all meds at once) ---- */
 function openFillModal(existing){
   const isEdit = !!existing;
   const qtyFor = (m)=>{
-    if (isEdit){
-      const match = existing.items.find(it=>it.medId===m.id);
-      if (match) return match.qty;
-    }
+    if (isEdit){ const match = existing.items.find(it=>it.medId===m.id); if (match) return match.qty; }
     return (m.dailyDose||1)*7;
   };
   const backdrop = document.createElement("div");
@@ -1187,26 +838,12 @@ function openFillModal(existing){
     <div class="modal modal-wide">
       <div class="label-eyebrow">${isEdit ? "Editar llenado del pastillero" : "Registrar llenado del pastillero"}</div>
       <p class="muted small" style="margin-top:4px">${isEdit ? "Corrija la fecha, cuidadora o cantidades de este registro." : `Registra el llenado de las ${state.meds.length} medicinas para la cuidadora.`}</p>
-      <div class="form-grid">
-        <label>Fecha<input id="fill-date" type="date" value="${isEdit?existing.date:todayISO()}"/></label>
-        <label>Cuidadora<input id="fill-by" value="${isEdit?esc(existing.by||''):''}" placeholder="Ej. Aracely"/></label>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink);font-weight:600">
-        <input type="checkbox" id="fill-deduct" ${isEdit?"":"checked"}/> Descontar estas cantidades del stock actual
-      </label>
+      <div class="form-grid"><label>Fecha<input id="fill-date" type="date" value="${isEdit?existing.date:todayISO()}"/></label><label>Cuidadora<input id="fill-by" value="${isEdit?esc(existing.by||''):''}" placeholder="Ej. Aracely"/></label></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink);font-weight:600"><input type="checkbox" id="fill-deduct" ${isEdit?"":"checked"}/> Descontar estas cantidades del stock actual</label>
       ${isEdit ? `<div class="muted small" style="margin-top:4px">Al editar, desmarcado por defecto para no descontar el stock dos veces — solo corrige el registro.</div>` : ""}
       <div class="label-eyebrow" style="margin-top:16px">Cantidad por medicamento (semanal)</div>
-      <div class="stack" id="fill-rows" style="margin-top:8px">
-        ${state.meds.map(m=>`
-          <div class="purchase-row" style="grid-template-columns:1fr 90px" data-med="${m.id}">
-            <span class="small">${esc(m.name)} ${esc(m.dose)}</span>
-            <input type="number" min="0" class="fill-qty" value="${qtyFor(m)}"/>
-          </div>`).join("")}
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="fill-cancel">Cancelar</button>
-        <button class="btn btn-primary" id="fill-save">${isEdit ? "Guardar cambios" : "Guardar llenado"}</button>
-      </div>
+      <div class="stack" id="fill-rows" style="margin-top:8px">${state.meds.map(m=>`<div class="purchase-row" style="grid-template-columns:1fr 90px" data-med="${m.id}"><span class="small">${esc(m.name)} ${esc(m.dose)}</span><input type="number" min="0" class="fill-qty" value="${qtyFor(m)}"/></div>`).join("")}</div>
+      <div class="modal-actions"><button class="btn btn-ghost" id="fill-cancel">Cancelar</button><button class="btn btn-primary" id="fill-save">${isEdit ? "Guardar cambios" : "Guardar llenado"}</button></div>
     </div>`;
   document.body.appendChild(backdrop);
   backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) backdrop.remove(); });
@@ -1224,26 +861,16 @@ function openFillModal(existing){
     });
     if (!items.length){
       let errEl = backdrop.querySelector("#fill-error");
-      if (!errEl){
-        errEl = document.createElement("div");
-        errEl.id = "fill-error";
-        errEl.className = "error-text";
-        backdrop.querySelector(".modal-actions").insertAdjacentElement("beforebegin", errEl);
-      }
+      if (!errEl){ errEl = document.createElement("div"); errEl.id = "fill-error"; errEl.className = "error-text"; backdrop.querySelector(".modal-actions").insertAdjacentElement("beforebegin", errEl); }
       errEl.textContent = "Ponga al menos una cantidad mayor a 0.";
       return;
     }
-    if (isEdit){
-      await updateFill(existing.id, date, by, items, deduct);
-    } else {
-      await registerFill(date, by, items, deduct);
-    }
+    if (isEdit){ await updateFill(existing.id, date, by, items, deduct); } else { await registerFill(date, by, items, deduct); }
     backdrop.remove();
     showToast(isEdit ? "Llenado actualizado" : (deduct ? `Llenado registrado — stock descontado en ${items.length} medicamentos` : `Llenado registrado — ${items.length} medicamentos`));
     render();
   });
 }
-
 function openStockCountModal(){
   const sorted = [...state.meds].sort((a,b)=>a.name.localeCompare(b.name));
   const backdrop = document.createElement("div");
@@ -1254,18 +881,8 @@ function openStockCountModal(){
       <p class="muted small" style="margin-top:4px">Ingresa lo que realmente contaste en el pastillero/frascos. Esto reemplaza el stock del sistema (no suma ni resta) y queda registrado como un ajuste, separado de compras y llenados.</p>
       <label style="display:block;margin-top:10px">Contado por<input id="count-by" placeholder="Ej. Aracely"/></label>
       <div class="label-eyebrow" style="margin-top:16px">Conteo por medicamento</div>
-      <div class="stack" id="count-rows" style="margin-top:8px">
-        ${sorted.map(m=>`
-          <div class="purchase-row" style="grid-template-columns:1fr 90px 90px" data-med="${m.id}">
-            <span class="small">${esc(m.name)} ${esc(m.dose)}</span>
-            <span class="muted small mono" style="align-self:center">sist: ${m.stock}</span>
-            <input type="number" min="0" class="count-qty" value="${m.stock}"/>
-          </div>`).join("")}
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="count-cancel">Cancelar</button>
-        <button class="btn btn-primary" id="count-save">Guardar conteo</button>
-      </div>
+      <div class="stack" id="count-rows" style="margin-top:8px">${sorted.map(m=>`<div class="purchase-row" style="grid-template-columns:1fr 90px 90px" data-med="${m.id}"><span class="small">${esc(m.name)} ${esc(m.dose)}</span><span class="muted small mono" style="align-self:center">sist: ${m.stock}</span><input type="number" min="0" class="count-qty" value="${m.stock}"/></div>`).join("")}</div>
+      <div class="modal-actions"><button class="btn btn-ghost" id="count-cancel">Cancelar</button><button class="btn btn-primary" id="count-save">Guardar conteo</button></div>
     </div>`;
   document.body.appendChild(backdrop);
   backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) backdrop.remove(); });
@@ -1277,22 +894,16 @@ function openStockCountModal(){
       const medId = row.dataset.med;
       const med = state.meds.find(m=>m.id===medId);
       const counted = Number(row.querySelector(".count-qty").value);
-      if (med && isFinite(counted) && counted !== med.stock){
-        changes.push({ medId, medName:`${med.name} ${med.dose}`, before: med.stock, after: counted });
-      }
+      if (med && isFinite(counted) && counted !== med.stock){ changes.push({ medId, medName:`${med.name} ${med.dose}`, before: med.stock, after: counted }); }
     });
     if (!changes.length){ showToast("No hubo cambios en el conteo"); backdrop.remove(); return; }
-    await mutateMeds(fresh=> fresh.map(m=>{
-      const match = changes.find(c=>c.medId===m.id);
-      return match ? { ...m, stock: match.after } : m;
-    }));
+    await mutateMeds(fresh=> fresh.map(m=>{ const match = changes.find(c=>c.medId===m.id); return match ? { ...m, stock: match.after } : m; }));
     await mutateAdjustments(fresh=> [...fresh, { id:"a"+Date.now(), date: todayISO(), by, changes }]);
     backdrop.remove();
     showToast(`Conteo guardado — ${changes.length} medicamento(s) ajustado(s)`);
     render();
   });
 }
-
 function wireTabEvents(){
   if (state.tab==="inventario"){
     const search = document.getElementById("inv-search");
@@ -1311,9 +922,7 @@ function wireTabEvents(){
   if (state.tab==="compras"){
     document.getElementById("pur-add").addEventListener("click", ()=> requireAdmin(()=>openPurchaseModal()));
     document.querySelectorAll(".pur-edit").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>openPurchaseModal(state.purchases.find(p=>p.id===b.dataset.id)))));
-    document.querySelectorAll(".pur-delete").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>{
-      if (confirm("¿Eliminar esta compra del historial?")) deletePurchase(b.dataset.id);
-    })));
+    document.querySelectorAll(".pur-delete").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>{ if (confirm("¿Eliminar esta compra del historial?")) deletePurchase(b.dataset.id); })));
   }
   if (state.tab==="pastillero"){
     document.getElementById("disp-submit").addEventListener("click", ()=>{
@@ -1325,17 +934,11 @@ function wireTabEvents(){
     });
     document.getElementById("fill-add").addEventListener("click", ()=> requireAdmin(()=>openFillModal()));
     document.querySelectorAll(".fill-edit").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>openFillModal(state.fills.find(f=>f.id===b.dataset.id)))));
-    document.querySelectorAll(".fill-delete").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>{
-      if (confirm("¿Eliminar este llenado del historial?")) deleteFill(b.dataset.id);
-    })));
+    document.querySelectorAll(".fill-delete").forEach(b=>b.addEventListener("click", ()=> requireAdmin(()=>{ if (confirm("¿Eliminar este llenado del historial?")) deleteFill(b.dataset.id); })));
     const quickAdd = document.getElementById("disp-quickadd");
     if (quickAdd) quickAdd.addEventListener("click", ()=> requireAdmin(()=> openMedEditModal({id:"",name:"",dose:"",brand:"",stock:0,minThreshold:15,dailyDose:1,unit:"tab",pricePerPill:null})));
   }
 }
-
-/* ============================================================ */
-/* Boot                                                          */
-/* ============================================================ */
 async function boot(){
   try {
     const app = document.getElementById("app");
@@ -1347,6 +950,9 @@ async function boot(){
     showFatalError("No se pudo cargar el inventario", esc(err.message || String(err)));
   }
 }
+/* FIX: auto-refresh para no sobrescribir con datos viejos */
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll().then(render); });
+setInterval(()=>{ loadAll().then(render); }, 30000);
 boot();
 </script>
 </body>

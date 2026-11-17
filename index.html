@@ -179,6 +179,14 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
   .mobile-admin-row .admin-toggle.on{background:rgba(111,154,114,0.15);border-color:var(--sage);color:var(--primary-dark);}
   .mobile-admin-row .admin-toggle.on .dot{background:var(--sage);}
 }
+/* FIX DESKTOP GAP — solo desktop, iPhone intacto */
+@media (min-width: 861px){
+  .content{max-width:1080px;margin:0 auto;padding-bottom:20px !important;}
+  .stack-lg{gap:14px !important;}
+  .stat-grid-6{gap:10px !important;}
+  .panel{padding:14px 16px !important;}
+  .topbar{padding:16px 28px 6px !important;}
+}
 </style>
 </head>
 <body>
@@ -216,6 +224,15 @@ async function kvSet(key, value){
     if(!r.ok) console.error('kvSet error', key, await r.text());
     return r.ok;
   }catch(e){ console.error('kvSet error', key, e); return false; }
+}
+/* FIX QUETIAPINA 25mg — normalizacion exacta nombre+dosis */
+function normMed(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().replace(/\\s+/g,' ').replace(/(\\d)\\s*mg/g,'$1mg'); }
+function findMedByNameDose(list, name){
+  const t = normMed(name);
+  if(!t) return null;
+  const exact = list.find(x=> normMed((x.name||'')+' '+(x.dose||''))===t || normMed(x.name||'')===t);
+  if(exact) return exact;
+  return null;
 }
 /* SEED - FIXED 11/9/26 conteo fisico, dailyDose corregido */
 const SEED_MEDS = [
@@ -269,7 +286,7 @@ async function loadAll(){
   if (!d) await kvSet("dispensing", state.dispensing);
   if (!f) await kvSet("fills", state.fills);
   if (!adj) await kvSet("adjustments", state.adjustments);
-  const norm = (s) => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+  const norm = (s) => String(s||"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");
   function findMedForItem(itemName){
     const in_ = norm(itemName);
     const candidates = state.meds.filter(med=>{
@@ -578,10 +595,23 @@ function openPurchaseModal(existing){
   backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) backdrop.remove(); });
   backdrop.querySelector("#p-cancel").addEventListener("click", ()=>backdrop.remove());
   backdrop.querySelector("#p-save").addEventListener("click", async ()=>{
-    const named = rows.filter(r=>r.medId).map(r=>{
-      const med = state.meds.find(m=>m.id===r.medId);
-      return { medId:r.medId, name: med?`${med.name} ${med.dose}`:"", qty:Number(r.qty), subtotal:Number(r.subtotal) };
-    });
+    /* FIX QUETIAPINA: leer directo del DOM, no de la variable rows que puede quedar stale, y hacer precio+stock en UNA sola actualizacion atomica */
+    const domRows = Array.from(backdrop.querySelectorAll(".purchase-row"));
+    const freshNamed = domRows.map(rowEl=>{
+      const medId = rowEl.querySelector(".r-med")?.value || "";
+      const qty = Number(rowEl.querySelector(".r-qty")?.value || 0);
+      const subtotal = Number(rowEl.querySelector(".r-subtotal")?.value || 0);
+      const med = state.meds.find(m=>m.id===medId);
+      return { medId, name: med?`${med.name} ${med.dose}`:"", qty, subtotal };
+    }).filter(r=>r.medId && r.qty>0);
+    // Fallback: si por alguna razon DOM no tiene medId, usar rows + match por nombre+dosis normalizado
+    let named = freshNamed;
+    if(!named.length){
+      named = rows.filter(r=>r.medId).map(r=>{
+        const med = state.meds.find(m=>m.id===r.medId);
+        return { medId:r.medId, name: med?`${med.name} ${med.dose}`:"", qty:Number(r.qty), subtotal:Number(r.subtotal) };
+      });
+    }
     const pharmacyVal = backdrop.querySelector("#p-pharmacy").value.trim();
     let errEl = backdrop.querySelector("#p-error");
     if (!errEl){
@@ -604,19 +634,29 @@ function openPurchaseModal(existing){
       stockApplied: addStock
     };
     await mutatePurchases(fresh=> isEdit ? fresh.map(p=>p.id===purchase.id?purchase:p) : [...fresh, purchase]);
-    await applyPurchasePrices(purchase);
-    if (isEdit && existing.stockApplied){
-      await mutateMeds(fresh=> fresh.map(m=>{
-        const match = (existing.items||[]).find(it=>it.medId===m.id);
-        return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
-      }));
-    }
-    if (addStock){
-      await mutateMeds(fresh=> fresh.map(m=>{
-        const match = named.find(it=>it.medId===m.id);
-        return match ? { ...m, stock: m.stock + match.qty } : m;
-      }));
-    }
+    /* UNA SOLA actualizacion: precio + revertir viejo stock (si edit) + sumar nuevo stock — asi no se pisan entre si */
+    await mutateMeds(fresh=> fresh.map(m=>{
+      let updated = {...m};
+      // Match por id exacto, si no, por nombre+dosis normalizado (cubre Quetiapina 25mg vs 100mg)
+      let match = named.find(it=>it.medId===m.id);
+      if(!match){
+        const byName = findMedByNameDose(fresh, named[0]?.name || "");
+        if(byName && byName.id===m.id) match = named[0];
+        else {
+          const anyMatch = named.find(it=>{ const mm = state.meds.find(x=>x.id===it.medId); return mm && normMed(mm.name+' '+mm.dose)===normMed(m.name+' '+m.dose); });
+          if(anyMatch) match = anyMatch;
+        }
+      }
+      if (isEdit && existing.stockApplied){
+        const old = (existing.items||[]).find(it=>it.medId===m.id);
+        if(old) updated.stock = Math.max(0, updated.stock - old.qty);
+      }
+      if(match){
+        if(match.qty){ const ppp = Number(match.subtotal)/Number(match.qty); if(isFinite(ppp)) updated.pricePerPill = ppp; }
+        if(addStock) updated.stock = updated.stock + match.qty;
+      }
+      return updated;
+    }));
     backdrop.remove();
     showToast(isEdit ? "Compra actualizada" : (addStock ? "Compra registrada — stock y precios actualizados" : "Compra registrada — precios actualizados"));
     render();

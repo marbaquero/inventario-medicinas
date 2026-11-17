@@ -552,6 +552,7 @@ function openPurchaseModal(existing){
   const totalEl = backdrop.querySelector("#p-total");
   const pharInput = backdrop.querySelector("#p-pharmacy");
   const pharList = backdrop.querySelector("#p-pharmacy-list");
+  
   function renderPharmacyList(){
     const q = pharInput.value.trim().toLowerCase();
     const matches = priorPharmacies.filter(ph=> !q || ph.toLowerCase().includes(q));
@@ -566,9 +567,11 @@ function openPurchaseModal(existing){
   pharInput.addEventListener("focus", renderPharmacyList);
   pharInput.addEventListener("input", renderPharmacyList);
   pharInput.addEventListener("blur", ()=> setTimeout(()=> pharList.classList.add("hidden"), 150));
+  
   function medOptions(selected){
     return state.meds.map(m=>`<option value="${m.id}" ${m.id===selected?"selected":""}>${esc(m.name)} ${esc(m.dose)}</option>`).join("");
   }
+  
   function renderRows(){
     rowsEl.innerHTML = rows.map((r,idx)=>`
       <div class="purchase-row" data-idx="${idx}">
@@ -580,38 +583,35 @@ function openPurchaseModal(existing){
     rowsEl.querySelectorAll(".purchase-row").forEach(rowEl=>{
       const idx = Number(rowEl.dataset.idx);
       rowEl.querySelector(".r-med").addEventListener("change", e=>{ rows[idx].medId = e.target.value; updateTotal(); });
-      rowEl.querySelector(".r-qty").addEventListener("input", e=>{ rows[idx].qty = e.target.value; });
+      // FIX: Added updateTotal() to quantity input so total updates dynamically
+      rowEl.querySelector(".r-qty").addEventListener("input", e=>{ rows[idx].qty = e.target.value; updateTotal(); });
       rowEl.querySelector(".r-subtotal").addEventListener("input", e=>{ rows[idx].subtotal = e.target.value; updateTotal(); });
       rowEl.querySelector(".r-remove").addEventListener("click", ()=>{ rows.splice(idx,1); renderRows(); updateTotal(); });
     });
   }
+  
   function updateTotal(){
     const total = rows.reduce((s,r)=>s+Number(r.subtotal||0),0);
     totalEl.textContent = "$"+total.toFixed(2);
   }
+  
   renderRows(); updateTotal();
   backdrop.querySelector("#p-addrow").addEventListener("click", ()=>{ rows.push({medId:"",qty:30,subtotal:0}); renderRows(); updateTotal(); });
   backdrop.querySelector("#p-pharmacy").addEventListener("input", updateTotal);
   backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) backdrop.remove(); });
   backdrop.querySelector("#p-cancel").addEventListener("click", ()=>backdrop.remove());
+  
   backdrop.querySelector("#p-save").addEventListener("click", async ()=>{
-    /* FIX QUETIAPINA: leer directo del DOM, no de la variable rows que puede quedar stale, y hacer precio+stock en UNA sola actualizacion atomica */
+    // FIX: Read directly from the DOM to ensure we have the freshest data
     const domRows = Array.from(backdrop.querySelectorAll(".purchase-row"));
-    const freshNamed = domRows.map(rowEl=>{
+    const named = domRows.map(rowEl=>{
       const medId = rowEl.querySelector(".r-med")?.value || "";
       const qty = Number(rowEl.querySelector(".r-qty")?.value || 0);
       const subtotal = Number(rowEl.querySelector(".r-subtotal")?.value || 0);
       const med = state.meds.find(m=>m.id===medId);
       return { medId, name: med?`${med.name} ${med.dose}`:"", qty, subtotal };
     }).filter(r=>r.medId && r.qty>0);
-    // Fallback: si por alguna razon DOM no tiene medId, usar rows + match por nombre+dosis normalizado
-    let named = freshNamed;
-    if(!named.length){
-      named = rows.filter(r=>r.medId).map(r=>{
-        const med = state.meds.find(m=>m.id===r.medId);
-        return { medId:r.medId, name: med?`${med.name} ${med.dose}`:"", qty:Number(r.qty), subtotal:Number(r.subtotal) };
-      });
-    }
+
     const pharmacyVal = backdrop.querySelector("#p-pharmacy").value.trim();
     let errEl = backdrop.querySelector("#p-error");
     if (!errEl){
@@ -620,9 +620,11 @@ function openPurchaseModal(existing){
       errEl.className = "error-text";
       backdrop.querySelector("#p-save").parentElement.insertAdjacentElement("beforebegin", errEl);
     }
+    
     if (!named.length){ errEl.textContent = "Seleccione al menos un medicamento."; return; }
     if (!pharmacyVal){ errEl.textContent = "Escriba el nombre de la farmacia o sucursal."; return; }
     errEl.textContent = "";
+    
     const total = named.reduce((s,it)=>s+it.subtotal,0);
     const addStock = backdrop.querySelector("#p-addstock").checked;
     const purchase = {
@@ -633,46 +635,40 @@ function openPurchaseModal(existing){
       items: named, total,
       stockApplied: addStock
     };
+    
+    // Save the purchase record
     await mutatePurchases(fresh=> isEdit ? fresh.map(p=>p.id===purchase.id?purchase:p) : [...fresh, purchase]);
-    /* UNA SOLA actualizacion: precio + revertir viejo stock (si edit) + sumar nuevo stock — asi no se pisan entre si */
+    
+    // FIX: CLEAN UP: Update medications strictly by medId. Removed the messy normMed fallback that was breaking Quetiapina.
     await mutateMeds(fresh=> fresh.map(m=>{
       let updated = {...m};
-      // Match por id exacto, si no, por nombre+dosis normalizado (cubre Quetiapina 25mg vs 100mg)
-      let match = named.find(it=>it.medId===m.id);
-      if(!match){
-        const byName = findMedByNameDose(fresh, named[0]?.name || "");
-        if(byName && byName.id===m.id) match = named[0];
-        else {
-          const anyMatch = named.find(it=>{ const mm = state.meds.find(x=>x.id===it.medId); return mm && normMed(mm.name+' '+mm.dose)===normMed(m.name+' '+m.dose); });
-          if(anyMatch) match = anyMatch;
-        }
-      }
+      
+      // Revert old stock if editing a past purchase
       if (isEdit && existing.stockApplied){
         const old = (existing.items||[]).find(it=>it.medId===m.id);
         if(old) updated.stock = Math.max(0, updated.stock - old.qty);
       }
+      
+      // Find the matching item for THIS specific medication
+      const match = named.find(it=>it.medId === m.id);
+      
       if(match){
-        if(match.qty){ const ppp = Number(match.subtotal)/Number(match.qty); if(isFinite(ppp)) updated.pricePerPill = ppp; }
+        // Update Price
+        if(match.qty){ 
+          const ppp = Number(match.subtotal)/Number(match.qty); 
+          if(isFinite(ppp)) updated.pricePerPill = ppp; 
+        }
+        // Update Stock
         if(addStock) updated.stock = updated.stock + match.qty;
       }
       return updated;
     }));
+
     backdrop.remove();
     showToast(isEdit ? "Compra actualizada" : (addStock ? "Compra registrada — stock y precios actualizados" : "Compra registrada — precios actualizados"));
     render();
   });
 }
-async function updateMedStock(id, delta){
-  await mutateMeds(fresh=> fresh.map(m=> m.id===id ? {...m, stock: Math.max(0, m.stock+delta)} : m));
-  render();
-}
-async function dispensePill(medId, qty, by){
-  const med = state.meds.find(m=>m.id===medId);
-  if (!med) return;
-  const entry = { id:"d"+Date.now(), date: todayISO(), medId, medName:`${med.name} ${med.dose}`, qty, by: by||"" };
-  await mutateDispensing(fresh=> [...fresh, entry]);
-  await mutateMeds(fresh=> fresh.map(m=> m.id===medId ? {...m, stock: Math.max(0, m.stock-qty)} : m));
-  showToast("Dosis registrada y descontada del stock");
 }
 async function registerFill(date, by, items, deductStock){
   const entry = { id:"f"+Date.now(), date, by, items, stockApplied: deductStock };

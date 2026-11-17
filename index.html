@@ -669,7 +669,6 @@ function openPurchaseModal(existing){
     render();
   });
 }
-}
 async function registerFill(date, by, items, deductStock){
   const entry = { id:"f"+Date.now(), date, by, items, stockApplied: deductStock };
   await mutateFills(fresh=> [...fresh, entry]);

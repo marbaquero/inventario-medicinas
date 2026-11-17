@@ -679,7 +679,6 @@ async function registerFill(date, by, items, deductStock){
       return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
     }));
   }
-}
 async function updateFill(id, date, by, items, deductStock){
   const existing = state.fills.find(f=>f.id===id);
   await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items, stockApplied: deductStock } : f));

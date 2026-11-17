@@ -669,6 +669,18 @@ function openPurchaseModal(existing){
     render();
   });
 }
+async function updateMedStock(id, delta){
+  await mutateMeds(fresh=> fresh.map(m=> m.id===id ? {...m, stock: Math.max(0, m.stock+delta)} : m));
+  render();
+}
+async function dispensePill(medId, qty, by){
+  const med = state.meds.find(m=>m.id===medId);
+  if (!med) return;
+  const entry = { id:"d"+Date.now(), date: todayISO(), medId, medName:`${med.name} ${med.dose}`, qty, by: by||"" };
+  await mutateDispensing(fresh=> [...fresh, entry]);
+  await mutateMeds(fresh=> fresh.map(m=> m.id===medId ? {...m, stock: Math.max(0, m.stock-qty)} : m));
+  showToast("Dosis registrada y descontada del stock");
+}
 async function registerFill(date, by, items, deductStock){
   const entry = { id:"f"+Date.now(), date, by, items, stockApplied: deductStock };
   await mutateFills(fresh=> [...fresh, entry]);
@@ -678,9 +690,7 @@ async function registerFill(date, by, items, deductStock){
       return match ? { ...m, stock: Math.max(0, m.stock - match.qty) } : m;
     }));
   }
-} // <-- THIS IS THE MISSING BRACE
-
-async function updateFill(id, date, by, items, deductStock){
+}
 async function updateFill(id, date, by, items, deductStock){
   const existing = state.fills.find(f=>f.id===id);
   await mutateFills(fresh=> fresh.map(f=> f.id===id ? { ...f, date, by, items, stockApplied: deductStock } : f));
